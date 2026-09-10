@@ -6,6 +6,7 @@
 
 // --- Default Data matching original invoice sample ---
 const SAMPLE_DATA = {
+  docType: 'INVOICE', // 'INVOICE', 'QUOTATION', 'QUOTE'
   invoiceNo: 'MAC/11/25-26',
   invoiceDate: '2026-07-14',
   clientName: 'Prathyusha Engineering College',
@@ -310,6 +311,9 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
   const isFirstPage = (pageIndex === 0);
   const isCompact = (appState.layoutDensity === 'compact');
 
+  const docTitle = appState.docType || 'INVOICE';
+  const docName = docTitle === 'INVOICE' ? 'Invoice' : (docTitle === 'QUOTE' ? 'Quote' : 'Quotation');
+
   // 1. Header (Full on Page 1, Continuation bar on Page 2+)
   let headerHtml = '';
   if (isFirstPage) {
@@ -347,7 +351,7 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
             </div>
           </div>
           <div class="header-title-box">
-            <h2 class="invoice-title">INVOICE</h2>
+            <h2 class="invoice-title">${escapeHtml(docTitle)}</h2>
           </div>
         </div>
         <div class="header-wave">
@@ -358,18 +362,18 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
         </div>
       </header>
 
-      <!-- INVOICE INFO & TAX INFORMATION -->
+      <!-- INVOICE / QUOTE INFO & TAX INFORMATION -->
       <section class="invoice-meta-section">
         <div class="meta-card">
           <div class="cyan-accent-bar"></div>
           <div class="meta-content">
-            <h4 class="meta-heading">INVOICE DETAILS</h4>
+            <h4 class="meta-heading">${escapeHtml(docTitle)} DETAILS</h4>
             <div class="meta-row">
-              <span class="meta-label">Invoice No.</span>
+              <span class="meta-label">${escapeHtml(docName)} No.</span>
               <span class="meta-value">${escapeHtml(appState.invoiceNo)}</span>
             </div>
             <div class="meta-row">
-              <span class="meta-label">Invoice Date</span>
+              <span class="meta-label">${escapeHtml(docName)} Date</span>
               <span class="meta-value">${escapeHtml(formatDateDisplay(appState.invoiceDate))}</span>
             </div>
           </div>
@@ -395,10 +399,10 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
         </div>
       </section>
 
-      <!-- INVOICE TO & PLACE OF SUPPLY -->
+      <!-- INVOICE / QUOTE TO & PLACE OF SUPPLY -->
       <section class="invoice-to-section">
         <div class="client-details">
-          <span class="client-label">I N V O I C E &nbsp; T O</span>
+          <span class="client-label">${escapeHtml(docTitle.split('').join(' '))} &nbsp; T O</span>
           <h3 class="client-name">${escapeHtml(appState.clientName || 'Valued Customer')}</h3>
           <p class="client-address-line">${escapeHtml(appState.clientAddress1 || '')}</p>
           <p class="client-address-line">${escapeHtml(appState.clientAddress2 || '')}</p>
@@ -420,10 +424,10 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
       <div class="continuation-header">
         <div class="continuation-brand">
           <h3>${escapeHtml(appState.company.name)}</h3>
-          <span class="continuation-badge-text">Invoice Continuation</span>
+          <span class="continuation-badge-text">${escapeHtml(docTitle)} Continuation</span>
         </div>
         <div class="continuation-meta">
-          <span>Invoice No: <strong>${escapeHtml(appState.invoiceNo)}</strong></span>
+          <span>${escapeHtml(docName)} No: <strong>${escapeHtml(appState.invoiceNo)}</strong></span>
           <span>Date: <strong>${escapeHtml(formatDateDisplay(appState.invoiceDate))}</strong></span>
           <span>Page <strong>${pageIndex + 1} of ${totalPages}</strong></span>
         </div>
@@ -720,11 +724,40 @@ function removeLineItem(id) {
   saveState();
 }
 
+function updateDocLabels() {
+  const docTitle = appState.docType || 'INVOICE';
+  const isInv = docTitle === 'INVOICE';
+  const isQuote = docTitle === 'QUOTE';
+  const docName = isInv ? 'Invoice' : (isQuote ? 'Quote' : 'Quotation');
+
+  const sectionTitle = document.getElementById('sectionTitleDoc');
+  if (sectionTitle) sectionTitle.textContent = `${docName} Details`;
+
+  const labelDocNo = document.getElementById('labelDocNo');
+  if (labelDocNo) labelDocNo.textContent = `${docName} Number`;
+
+  const labelDocDate = document.getElementById('labelDocDate');
+  if (labelDocDate) labelDocDate.textContent = `${docName} Date`;
+}
+
 // ==========================================================================
 // FORM SYNCHRONIZATION & EVENT BINDINGS
 // ==========================================================================
 function bindFormInputs() {
-  // Invoice Meta
+  // Document Type Selector (Invoice / Quotation / Quote)
+  const docTypeBtns = document.querySelectorAll('#docTypeSelector button[data-doctype]');
+  docTypeBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const type = btn.dataset.doctype;
+      appState.docType = type;
+      docTypeBtns.forEach(b => b.classList.toggle('active', b.dataset.doctype === type));
+      updateDocLabels();
+      updatePreview();
+      saveState();
+    });
+  });
+
+  // Invoice / Document Meta
   const inputInvoiceNo = document.getElementById('inputInvoiceNo');
   const inputInvoiceDate = document.getElementById('inputInvoiceDate');
 
@@ -895,6 +928,11 @@ function bindFormInputs() {
 }
 
 function syncFormValues() {
+  const docType = appState.docType || 'INVOICE';
+  const docTypeBtns = document.querySelectorAll('#docTypeSelector button[data-doctype]');
+  docTypeBtns.forEach(b => b.classList.toggle('active', b.dataset.doctype === docType));
+  updateDocLabels();
+
   document.getElementById('inputInvoiceNo').value = appState.invoiceNo;
   document.getElementById('inputInvoiceDate').value = appState.invoiceDate;
   document.getElementById('inputClientName').value = appState.clientName;
@@ -1025,6 +1063,7 @@ function loadState() {
 document.addEventListener('DOMContentLoaded', () => {
   loadState();
   bindFormInputs();
+  syncFormValues();
   renderEditorItems();
   updatePreview();
 });

@@ -78,19 +78,30 @@
       <div class="sidebar-scrollable">
         <form id="invoiceForm" onsubmit="return false;">
           
-          <!-- INVOICE METADATA SECTION -->
+          <!-- DOCUMENT TYPE & METADATA SECTION -->
           <div class="form-section">
             <div class="section-title">
               <span class="section-num">1</span>
-              <h3>Invoice Details</h3>
+              <h3 id="sectionTitleDoc">Document Type &amp; Details</h3>
             </div>
-            <div class="form-grid grid-2">
+
+            <!-- Selector: Invoice or Quote / Quotation -->
+            <div class="doc-type-selector-wrapper">
+              <label class="field-mini-label">Document Type (Shows in Header):</label>
+              <div class="pill-selector pill-selector-large" id="docTypeSelector">
+                <button type="button" class="pill-btn active" data-doctype="INVOICE">INVOICE</button>
+                <button type="button" class="pill-btn" data-doctype="QUOTATION">QUOTATION</button>
+                <button type="button" class="pill-btn" data-doctype="QUOTE">QUOTE</button>
+              </div>
+            </div>
+
+            <div class="form-grid grid-2" style="margin-top: 14px;">
               <div class="form-group">
-                <label for="inputInvoiceNo">Invoice Number</label>
-                <input type="text" id="inputInvoiceNo" value="MAC/11/25-26" placeholder="e.g. MAC/12/25-26" required>
+                <label for="inputInvoiceNo" id="labelDocNo">Invoice Number</label>
+                <input type="text" id="inputInvoiceNo" value="MAC/11/25-26" placeholder="e.g. MAC/11/25-26" required>
               </div>
               <div class="form-group">
-                <label for="inputInvoiceDate">Invoice Date</label>
+                <label for="inputInvoiceDate" id="labelDocDate">Invoice Date</label>
                 <input type="date" id="inputInvoiceDate" required>
               </div>
             </div>
