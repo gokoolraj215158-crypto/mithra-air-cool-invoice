@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mithra Air Cool - Invoice Generator</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <!-- LEFT SIDEBAR: CONTROLS & DATA ENTRY -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand-badge">
+          <div class="brand-icon">
+            <svg viewBox="0 0 40 40" width="28" height="28" fill="none">
+              <path d="M6 32L14 12L20 24L26 12L34 32H27L23 20L20 26L17 20L13 32H6Z" fill="url(#brandGrad1)"/>
+              <circle cx="20" cy="9" r="3" fill="#38bdf8"/>
+              <defs>
+                <linearGradient id="brandGrad1" x1="6" y1="12" x2="34" y2="32" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#38bdf8"/>
+                  <stop offset="1" stop-color="#0284c7"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div>
+            <h2>MITHRA AIR COOL</h2>
+            <span class="subtext">Invoice Generation Suite</span>
+          </div>
+        </div>
+
+        <div class="quick-actions">
+          <button type="button" class="btn btn-primary" id="btnPrintInvoice">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9V2h12v7M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/>
+              <path d="M6 14h12v8H6z"/>
+            </svg>
+            Print / Save PDF
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnLoadSample" title="Load sample from original invoice">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 12a9 9 0 1018 0 9 9 0 00-18 0zm9-5v5l3 3"/>
+            </svg>
+            Load Sample
+          </button>
+          <button type="button" class="btn btn-secondary" id="btnNewInvoice" title="Clear for new invoice">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14m-7-7h14"/>
+            </svg>
+            New
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-scrollable">
+        <form id="invoiceForm" onsubmit="return false;">
+          
+          <!-- INVOICE METADATA SECTION -->
+          <div class="form-section">
+            <div class="section-title">
+              <span class="section-num">1</span>
+              <h3>Invoice Details</h3>
+            </div>
+            <div class="form-grid grid-2">
+              <div class="form-group">
+                <label for="inputInvoiceNo">Invoice Number</label>
+                <input type="text" id="inputInvoiceNo" value="MAC/11/25-26" placeholder="e.g. MAC/12/25-26" required>
+              </div>
+              <div class="form-group">
+                <label for="inputInvoiceDate">Invoice Date</label>
+                <input type="date" id="inputInvoiceDate" required>
+              </div>
+            </div>
+          </div>
+
+          <!-- CLIENT DETAILS SECTION -->
+          <div class="form-section">
+            <div class="section-title">
+              <span class="section-num">2</span>
+              <h3>Invoice To (Client Info)</h3>
+            </div>
+            <div class="form-group">
+              <label for="inputClientName">Client / Organization Name</label>
+              <input type="text" id="inputClientName" value="Prathyusha Engineering College" placeholder="e.g. Prathyusha Engineering College" required>
+            </div>
+            <div class="form-group">
+              <label for="inputClientAddress1">Address Line 1</label>
+              <input type="text" id="inputClientAddress1" value="Aranvoyalkuppam, Poonamallee-Tiruvallur Road, Tiruvallur" placeholder="Street, Area, Road">
+            </div>
+            <div class="form-group">
+              <label for="inputClientAddress2">Address Line 2 / City & PIN</label>
+              <input type="text" id="inputClientAddress2" value="Tamil Nadu 602025" placeholder="City, State PIN">
+            </div>
+            <div class="form-group">
+              <label for="inputSupplyState">Place of Supply</label>
+              <input type="text" id="inputSupplyState" value="Tamil Nadu" placeholder="e.g. Tamil Nadu">
+            </div>
+          </div>
+
+          <!-- GST CONFIGURATION SECTION -->
+          <div class="form-section highlight-card">
+            <div class="section-title">
+              <span class="section-num">3</span>
+              <h3>GST Options</h3>
+            </div>
+            <p class="section-hint">Select whether this invoice includes GST calculation:</p>
+            <div class="gst-toggle-group">
+              <label class="gst-toggle-option">
+                <input type="radio" name="gstMode" value="without-gst" checked id="gstModeWithout">
+                <div class="toggle-card">
+                  <span class="toggle-title">Without GST (0%)</span>
+                  <span class="toggle-desc">Displays ₹0 for CGST & SGST (Same as sample)</span>
+                </div>
+              </label>
+
+              <label class="gst-toggle-option">
+                <input type="radio" name="gstMode" value="with-gst" id="gstModeWith">
+                <div class="toggle-card">
+                  <span class="toggle-title">With GST (18%)</span>
+                  <span class="toggle-desc">Intra-State: CGST 9% + SGST 9%</span>
+                </div>
+              </label>
+
+              <label class="gst-toggle-option">
+                <input type="radio" name="gstMode" value="igst" id="gstModeIgst">
+                <div class="toggle-card">
+                  <span class="toggle-title">Inter-State IGST (18%)</span>
+                  <span class="toggle-desc">Integrated GST 18% for outside TN</span>
+                </div>
+              </label>
+            </div>
+          </div>
+
+          <!-- LINE ITEMS SECTION -->
+          <div class="form-section">
+            <div class="section-title-between">
+              <div class="section-title">
+                <span class="section-num">4</span>
+                <h3>Line Items (<span id="itemsCountBadge">3</span>)</h3>
+              </div>
+              <button type="button" class="btn btn-sm btn-accent" id="btnAddItem">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <path d="M12 5v14m-7-7h14"/>
+                </svg>
+                Add Item
+              </button>
+            </div>
+            <p class="section-hint">The invoice table automatically adjusts rows and totals as items are added or removed.</p>
+
+            <div class="line-items-editor" id="lineItemsEditor">
+              <!-- Item rows will be dynamically populated here -->
+            </div>
+          </div>
+
+          <!-- OPTIONAL PRESETS & COMPANY DETAILS -->
+          <details class="form-section collapsible-section">
+            <summary>
+              <div class="summary-header">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M3 21h18M3 10h18M5 6l7-3 7 3M4 10v11M20 10v11M8 14v4M12 14v4M16 14v4"/>
+                </svg>
+                <span>Company & Bank Information (Defaults)</span>
+              </div>
+              <span class="chevron">▾</span>
+            </summary>
+            <div class="collapsible-body">
+              <div class="form-grid grid-2">
+                <div class="form-group">
+                  <label for="inputGstNo">Company GST No.</label>
+                  <input type="text" id="inputGstNo" value="33CRPPA9823D12V">
+                </div>
+                <div class="form-group">
+                  <label for="inputStateCode">State & Code</label>
+                  <input type="text" id="inputStateCode" value="Tamil Nadu (33)">
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="inputBankName">Bank Name</label>
+                <input type="text" id="inputBankName" value="Indian Bank">
+              </div>
+              <div class="form-grid grid-2">
+                <div class="form-group">
+                  <label for="inputAccountNo">Account No.</label>
+                  <input type="text" id="inputAccountNo" value="6621884173">
+                </div>
+                <div class="form-group">
+                  <label for="inputIfsc">IFSC Code</label>
+                  <input type="text" id="inputIfsc" value="IDIB000V060">
+                </div>
+              </div>
+              <div class="form-grid grid-2">
+                <div class="form-group">
+                  <label for="inputBranch">Branch</label>
+                  <input type="text" id="inputBranch" value="Valarpuram">
+                </div>
+                <div class="form-group">
+                  <label for="inputBeneficiary">Beneficiary</label>
+                  <input type="text" id="inputBeneficiary" value="R Ajith">
+                </div>
+              </div>
+              <div class="form-grid grid-2">
+                <div class="form-group">
+                  <label for="inputPhone">Phone Number</label>
+                  <input type="text" id="inputPhone" value="(+91) 8610916412">
+                </div>
+                <div class="form-group">
+                  <label for="inputEmail">Email Address</label>
+                  <input type="text" id="inputEmail" value="mithraair@gmail.com">
+                </div>
+              </div>
+            </div>
+          </details>
+
+        </form>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="live-summary">
+          <span>Grand Total:</span>
+          <strong id="sidebarGrandTotal">₹7,650.00</strong>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT MAIN: LIVE A4 PREVIEW CANVAS -->
+    <main class="preview-stage">
+      <div class="preview-toolbar">
+        <div class="toolbar-left">
+          <span class="preview-status-dot"></span>
+          <span class="toolbar-label">Live A4 Invoice Preview</span>
+          <span class="format-tag">A4 Portrait (210 × 297 mm)</span>
+        </div>
+        <div class="toolbar-right">
+          <button type="button" class="btn btn-icon" id="btnZoomOut" title="Zoom Out">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </button>
+          <span class="zoom-level" id="zoomDisplay">100%</span>
+          <button type="button" class="btn btn-icon" id="btnZoomIn" title="Zoom In">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/>
+            </svg>
+          </button>
+          <button type="button" class="btn btn-icon" id="btnZoomReset" title="Fit to Screen">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="preview-viewport" id="previewViewport">
+        
+        <!-- INVOICE SHEET (EXACT PIXEL-PERFECT REPLICA) -->
+        <div class="invoice-sheet" id="invoiceSheet">
+          
+          <!-- TOP HEADER WITH LOGO & GRADIENT WAVE -->
+          <header class="invoice-header">
+            <div class="header-inner">
+              <div class="header-brand">
+                <div class="header-logo-container">
+                  <!-- Stylized Mithra Air Cool Geometric 3D Monogram Logo -->
+                  <svg class="header-logo-svg" viewBox="0 0 100 100" width="60" height="60">
+                    <defs>
+                      <linearGradient id="mLogoGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#00ffff" />
+                        <stop offset="50%" stop-color="#0096c7" />
+                        <stop offset="100%" stop-color="#023e8a" />
+                      </linearGradient>
+                      <linearGradient id="mLogoGrad2" x1="100%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stop-color="#38bdf8" />
+                        <stop offset="100%" stop-color="#1d4ed8" />
+                      </linearGradient>
+                      <linearGradient id="mHexGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                        <stop offset="0%" stop-color="#001845" />
+                        <stop offset="100%" stop-color="#023e8a" />
+                      </linearGradient>
+                      <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                        <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#00b4d8" flood-opacity="0.4"/>
+                      </filter>
+                    </defs>
+                    <!-- Rounded Hexagon Base -->
+                    <polygon points="50,4 90,26 90,74 50,96 10,74 10,26" fill="url(#mHexGrad)" stroke="#00b4d8" stroke-width="2"/>
+                    <!-- Stylized 3D M Peak 1 -->
+                    <polygon points="20,70 36,25 48,55 36,70" fill="url(#mLogoGrad1)"/>
+                    <!-- Stylized 3D M Peak 2 -->
+                    <polygon points="80,70 64,25 52,55 64,70" fill="url(#mLogoGrad2)"/>
+                    <!-- Center connecting facets -->
+                    <polygon points="36,25 50,58 64,25 50,40" fill="#67e8f9" opacity="0.95"/>
+                    <polygon points="48,55 50,58 52,55 50,75" fill="#38bdf8"/>
+                  </svg>
+                </div>
+                <div class="header-titles">
+                  <h1 class="company-name" id="previewCompanyName">MITHRA AIR COOL</h1>
+                  <p class="company-address" id="previewCompanyAddress">17,RajivGandhiStreet,AranvoyalVillage,Thiruvallur – 602025</p>
+                </div>
+              </div>
+
+              <div class="header-title-box">
+                <h2 class="invoice-title">INVOICE</h2>
+              </div>
+            </div>
+
+            <!-- Wave / Sweep Accent Line -->
+            <div class="header-wave">
+              <svg viewBox="0 0 1000 36" preserveAspectRatio="none">
+                <path d="M0,0 C320,32 680,32 1000,0 L1000,36 L0,36 Z" fill="#ffffff"></path>
+                <path d="M0,0 C320,32 680,32 1000,0" fill="none" stroke="#38bdf8" stroke-width="3.5" opacity="0.85"></path>
+              </svg>
+            </div>
+          </header>
+
+          <!-- INVOICE INFO & TAX INFORMATION -->
+          <section class="invoice-meta-section">
+            <!-- Left: Invoice Details -->
+            <div class="meta-card">
+              <div class="cyan-accent-bar"></div>
+              <div class="meta-content">
+                <h4 class="meta-heading">INVOICE DETAILS</h4>
+                <div class="meta-row">
+                  <span class="meta-label">Invoice No.</span>
+                  <span class="meta-value" id="previewInvoiceNo">MAC/11/25-26</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">Invoice Date</span>
+                  <span class="meta-value" id="previewInvoiceDate">14 / 07/ 2026</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right: Tax Information -->
+            <div class="meta-card">
+              <div class="cyan-accent-bar"></div>
+              <div class="meta-content">
+                <h4 class="meta-heading">TAX INFORMATION</h4>
+                <div class="meta-row">
+                  <span class="meta-label">GST No.</span>
+                  <span class="meta-value" id="previewGstNo">33CRPPA9823D12V</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">State</span>
+                  <span class="meta-value" id="previewState">Tamil Nadu</span>
+                </div>
+                <div class="meta-row">
+                  <span class="meta-label">State Code</span>
+                  <span class="meta-value" id="previewStateCode">33</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- INVOICE TO & SUPPLY STATE -->
+          <section class="invoice-to-section">
+            <div class="client-details">
+              <span class="client-label">I N V O I C E &nbsp; T O</span>
+              <h3 class="client-name" id="previewClientName">Prathyusha Engineering College</h3>
+              <p class="client-address-line" id="previewClientAddress1">Aranvoyalkuppam,Poonaamallee-TiruvallurRoad,Tiruvallur</p>
+              <p class="client-address-line" id="previewClientAddress2">Tamil Nadu 602025</p>
+            </div>
+            <div class="supply-badge" id="previewSupplyBadge">
+              <span class="target-icon">
+                <svg viewBox="0 0 20 20" width="14" height="14" fill="none">
+                  <circle cx="10" cy="10" r="8" stroke="#0284c7" stroke-width="1.8"/>
+                  <circle cx="10" cy="10" r="3.5" fill="#0284c7"/>
+                </svg>
+              </span>
+              <span class="supply-text" id="previewSupplyText">Supply: Tamil Nadu</span>
+            </div>
+          </section>
+
+          <!-- LINE ITEMS TABLE (AUTO-ADJUSTING) -->
+          <section class="table-section">
+            <table class="items-table" id="itemsTable">
+              <thead>
+                <tr>
+                  <th class="col-sno">S.No</th>
+                  <th class="col-desc">ITEM DESCRIPTION</th>
+                  <th class="col-qty">QTY</th>
+                  <th class="col-rate">RATE(₹)</th>
+                  <th class="col-amount">AMOUNT(₹)</th>
+                </tr>
+              </thead>
+              <tbody id="previewTableBody">
+                <!-- Dynamically populated by JS -->
+              </tbody>
+            </table>
+          </section>
+
+          <!-- BOTTOM SECTION: WORDS, BANK DETAILS, TOTALS, SIGNATORY -->
+          <section class="invoice-bottom-section">
+            <!-- Left Side: Amount in Words & Bank Details -->
+            <div class="bottom-left">
+              <div class="amount-in-words-box">
+                <div class="words-label">AMOUNT IN WORDS</div>
+                <div class="words-value" id="previewAmountWords">Seven thousand Six Hundred Fifty only</div>
+              </div>
+
+              <div class="bank-details-box">
+                <div class="bank-header">
+                  <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#0284c7" stroke-width="2">
+                    <rect x="2" y="5" width="20" height="14" rx="2"/>
+                    <line x1="2" y1="10" x2="22" y2="10"/>
+                  </svg>
+                  <span class="bank-title">BANK DETAILS</span>
+                </div>
+                <div class="bank-grid">
+                  <span class="bank-label">Bank Name</span>
+                  <span class="bank-val" id="previewBankName">Indian Bank</span>
+
+                  <span class="bank-label">Account No.</span>
+                  <span class="bank-val" id="previewAccountNo">6621884173</span>
+
+                  <span class="bank-label">Branch</span>
+                  <span class="bank-val" id="previewBranch">Valarpuram</span>
+
+                  <span class="bank-label">IFSC Code</span>
+                  <span class="bank-val" id="previewIfsc">IDIB000V060</span>
+
+                  <span class="bank-label">Beneficiary</span>
+                  <span class="bank-val" id="previewBeneficiary">R Ajith</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Side: Sub Total, Taxes, Grand Total, Signatory -->
+            <div class="bottom-right">
+              <div class="calculations-box">
+                <div class="calc-row">
+                  <span class="calc-label">Sub &nbsp; Total</span>
+                  <span class="calc-val" id="previewSubTotal">₹7,650.00</span>
+                </div>
+                <div class="calc-row" id="rowCgst">
+                  <span class="calc-label">CGST@9%</span>
+                  <span class="calc-val" id="previewCgst">₹0</span>
+                </div>
+                <div class="calc-row" id="rowSgst">
+                  <span class="calc-label">SGST@9%</span>
+                  <span class="calc-val" id="previewSgst">₹0</span>
+                </div>
+                <div class="calc-row hide" id="rowIgst">
+                  <span class="calc-label">IGST@18%</span>
+                  <span class="calc-val" id="previewIgst">₹0</span>
+                </div>
+              </div>
+
+              <!-- Grand Total Banner -->
+              <div class="grand-total-banner">
+                <span class="grand-total-label">Grand Total</span>
+                <span class="grand-total-val" id="previewGrandTotal">₹7,650.00</span>
+              </div>
+
+              <!-- Authorized Signatory -->
+              <div class="signatory-box">
+                <div class="signatory-space"></div>
+                <div class="signatory-label">AUTHORIZED SIGNATORY</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- FOOTER -->
+          <footer class="invoice-footer">
+            <div class="footer-divider"></div>
+            <div class="footer-contacts">
+              <div class="contact-item">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#0096c7" stroke-width="2">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                  <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+                <span id="previewPhone">(+91) 8610916412</span>
+              </div>
+              <div class="contact-item">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#0096c7" stroke-width="2">
+                  <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+                  <polyline points="22,6 12,13 2,6"/>
+                </svg>
+                <span id="previewEmail">mithraair@gmail.com</span>
+              </div>
+              <div class="contact-item">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#0096c7" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
+                  <circle cx="12" cy="10" r="3"/>
+                </svg>
+                <span>Thiruvallur, Tamil Nadu</span>
+              </div>
+            </div>
+            <div class="footer-thankyou">
+              <p>Thank you for your business</p>
+              <div class="thankyou-accent-bar"></div>
+            </div>
+          </footer>
+
+        </div>
+        <!-- END INVOICE SHEET -->
+
+      </div>
+    </main>
+  </div>
+
+  <!-- Datalist for fast item suggestions -->
+  <datalist id="serviceSuggestions">
+    <option value="Seminar Hall Ductable blower motor service">
+    <option value="Seminar Hall Ductable blower motor labour">
+    <option value="Transport">
+    <option value="Split AC General Service">
+    <option value="Cassette AC Deep Cleaning & Service">
+    <option value="AC Gas Charging R410A / R32">
+    <option value="Compressor Replacement & Labour">
+    <option value="Copper Piping & Insulation per ft">
+    <option value="PCB Board Repair / Replacement">
+    <option value="Outdoor Unit Shifting & Re-installation">
+  </datalist>
+
+  <script src="app.js"></script>
+</body>
+</html>

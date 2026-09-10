@@ -1,0 +1,9 @@
+{
+  "name": "mithra-air-cool-invoice-generator",
+  "version": "1.0.0",
+  "description": "Invoice generator web app for Mithra Air Cool with auto-adjusting table, GST toggle, and A4 print export.",
+  "scripts": {
+    "start": "npx serve -l 3000",
+    "dev": "npx serve -l 3000"
+  }
+}
