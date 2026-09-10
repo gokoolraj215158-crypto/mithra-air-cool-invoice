@@ -1,14 +1,15 @@
 /* ==========================================================================
    MITHRA AIR COOL - INVOICE GENERATOR COMPLETE DESIGN SYSTEM
+   Mobile-Optimized & Multi-Page A4 Engine
    ========================================================================== */
 
 :root {
-  /* UI Theme Palette (Dark Modern Studio) */
-  --bg-dark: #0f172a;
-  --bg-surface: #1e293b;
-  --bg-card: #334155;
-  --bg-card-hover: #3e4f66;
-  --border-color: #334155;
+  /* UI Theme Palette */
+  --bg-dark: #0b1120;
+  --bg-surface: #151f32;
+  --bg-card: #1e293b;
+  --bg-card-hover: #273549;
+  --border-color: #243247;
   --border-focus: #38bdf8;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
@@ -19,13 +20,15 @@
   --success: #10b981;
   --danger: #ef4444;
 
-  /* Invoice Document Colors (Exact Replica) */
-  --inv-header-start: #0353a4;
+  /* Invoice Document Colors (Exact Match) */
+  --inv-header-start: #024b86;
   --inv-header-mid: #0077b6;
   --inv-header-end: #0096c7;
+  --inv-header-cyan: #00b4d8;
   --inv-wave-cyan: #38bdf8;
   --inv-table-header: #0096c7;
   --inv-table-border: #38bdf8;
+  --inv-cell-border: #7dd3fc;
   --inv-grand-total: #0284c7;
   --inv-text-dark: #0f172a;
   --inv-text-mid: #334155;
@@ -51,6 +54,54 @@ body {
   min-height: 100vh;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+}
+
+/* ==========================================================================
+   MOBILE NAVIGATION BAR (TABS)
+   ========================================================================== */
+
+.mobile-nav-bar {
+  display: none;
+  background: var(--bg-surface);
+  border-bottom: 1px solid var(--border-color);
+  padding: 8px 12px;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  gap: 8px;
+}
+
+.mobile-tab-btn {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.mobile-tab-btn.active {
+  background: linear-gradient(135deg, #0284c7 0%, #0096c7 100%);
+  color: #ffffff;
+  border-color: var(--accent-sky);
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.4);
+}
+
+.mobile-total-badge {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11px;
+  background: rgba(0, 0, 0, 0.25);
+  padding: 2px 6px;
+  border-radius: 4px;
+  color: #ffffff;
 }
 
 /* ==========================================================================
@@ -82,14 +133,14 @@ body {
 .sidebar-header {
   padding: 18px 22px;
   border-bottom: 1px solid var(--border-color);
-  background: linear-gradient(180deg, rgba(30, 41, 59, 0.9) 0%, rgba(15, 23, 42, 0.95) 100%);
+  background: linear-gradient(180deg, rgba(21, 31, 50, 0.9) 0%, rgba(11, 17, 32, 0.95) 100%);
 }
 
 .brand-badge {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .brand-icon {
@@ -101,6 +152,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .brand-badge h2 {
@@ -112,7 +164,7 @@ body {
 }
 
 .brand-badge .subtext {
-  font-size: 11.5px;
+  font-size: 11px;
   color: var(--accent-sky);
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -121,7 +173,7 @@ body {
 
 .quick-actions {
   display: grid;
-  grid-template-columns: 1.8fr 1.2fr 0.9fr;
+  grid-template-columns: 1.6fr 1fr 0.9fr;
   gap: 8px;
 }
 
@@ -138,6 +190,7 @@ body {
   cursor: pointer;
   transition: all var(--transition-fast);
   font-family: inherit;
+  white-space: nowrap;
 }
 
 .btn:active {
@@ -225,16 +278,16 @@ body {
 }
 
 .form-section {
-  background: rgba(15, 23, 42, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(11, 17, 32, 0.6);
+  border: 1px solid var(--border-color);
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 18px;
 }
 
 .highlight-card {
-  border-color: rgba(56, 189, 248, 0.3);
-  background: linear-gradient(180deg, rgba(2, 132, 199, 0.08) 0%, rgba(15, 23, 42, 0.6) 100%);
+  border-color: rgba(56, 189, 248, 0.35);
+  background: linear-gradient(180deg, rgba(2, 132, 199, 0.08) 0%, rgba(11, 17, 32, 0.7) 100%);
 }
 
 .section-title {
@@ -262,6 +315,7 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
 }
 
 .section-title h3 {
@@ -275,6 +329,7 @@ body {
   font-size: 11.5px;
   color: var(--text-muted);
   margin-bottom: 12px;
+  line-height: 1.4;
 }
 
 .form-grid {
@@ -291,6 +346,7 @@ body {
   flex-direction: column;
   gap: 6px;
   margin-bottom: 10px;
+  min-width: 0; /* Crucial: Prevents flex child overflow */
 }
 
 .form-group:last-child {
@@ -309,11 +365,20 @@ body {
   background: var(--bg-dark);
   border: 1px solid var(--border-color);
   color: var(--text-main);
-  padding: 8px 12px;
+  padding: 9px 12px;
   border-radius: 7px;
-  font-size: 13px;
+  font-size: 13.5px;
   font-family: inherit;
   transition: border-color var(--transition-fast);
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+/* Fix iOS date input styling */
+.form-group input[type="date"] {
+  min-height: 38px;
+  color-scheme: dark;
 }
 
 .form-group input:focus,
@@ -322,6 +387,49 @@ body {
   outline: none;
   border-color: var(--border-focus);
   box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+/* Page Layout Density Switcher */
+.layout-toggle-row {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.layout-toggle-label {
+  font-size: 11.5px;
+  color: var(--text-muted);
+  display: block;
+  margin-bottom: 6px;
+  font-weight: 500;
+}
+
+.pill-selector {
+  display: flex;
+  background: var(--bg-dark);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 3px;
+  gap: 4px;
+}
+
+.pill-btn {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 11.5px;
+  font-weight: 600;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  text-align: center;
+}
+
+.pill-btn.active {
+  background: var(--accent-blue);
+  color: #ffffff;
 }
 
 /* GST Option Segmented Cards */
@@ -374,7 +482,10 @@ body {
   color: var(--accent-sky);
 }
 
-/* Dynamic Line Items Editor */
+/* ==========================================================================
+   DYNAMIC LINE ITEMS EDITOR (EXPANDED & MOBILE FRIENDLY)
+   ========================================================================== */
+
 .line-items-editor {
   display: flex;
   flex-direction: column;
@@ -386,13 +497,13 @@ body {
   background: var(--bg-dark);
   border: 1px solid var(--border-color);
   border-radius: 8px;
-  padding: 12px;
+  padding: 12px 14px;
   position: relative;
   transition: border-color var(--transition-fast);
 }
 
 .item-row-card:hover {
-  border-color: rgba(255, 255, 255, 0.18);
+  border-color: rgba(56, 189, 248, 0.3);
 }
 
 .item-card-header {
@@ -415,7 +526,7 @@ body {
   border: none;
   color: var(--text-muted);
   cursor: pointer;
-  padding: 2px;
+  padding: 4px;
   display: flex;
   align-items: center;
   border-radius: 4px;
@@ -424,33 +535,59 @@ body {
 
 .btn-remove-item:hover {
   color: var(--danger);
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.15);
 }
 
-.item-calc-grid {
-  display: grid;
-  grid-template-columns: 1fr 1.3fr 1.3fr;
-  gap: 8px;
-  margin-top: 8px;
+/* Roomy 3-column calculation row */
+.item-calc-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 10px;
+  margin-top: 10px;
 }
 
-.item-amount-display {
+.item-calc-row .qty-field {
+  width: 76px;
+  min-width: 68px;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.item-calc-row .rate-field {
+  flex: 1;
+  min-width: 110px;
+  margin-bottom: 0;
+}
+
+.item-calc-row .amount-field {
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: flex-end;
+  min-width: 100px;
+  flex-shrink: 0;
+  margin-bottom: 0;
 }
 
-.item-amount-display .amount-label {
+.amount-field .amount-label {
   font-size: 10px;
+  font-weight: 600;
   color: var(--text-muted);
+  text-transform: uppercase;
+  margin-bottom: 4px;
 }
 
-.item-amount-display .amount-value {
+.amount-field .amount-value {
   font-family: 'JetBrains Mono', monospace;
-  font-weight: 700;
   font-size: 13.5px;
+  font-weight: 700;
   color: #38bdf8;
+  background: rgba(56, 189, 248, 0.1);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  padding: 7px 10px;
+  border-radius: 6px;
+  text-align: right;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Collapsible Details */
@@ -523,10 +660,11 @@ details[open] .chevron {
 
 .preview-stage {
   flex: 1;
-  background: #090d16;
+  background: #070c18;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  position: relative;
 }
 
 .preview-toolbar {
@@ -538,6 +676,7 @@ details[open] .chevron {
   justify-content: space-between;
   padding: 0 24px;
   z-index: 10;
+  flex-shrink: 0;
 }
 
 .toolbar-left {
@@ -563,10 +702,11 @@ details[open] .chevron {
 .format-tag {
   font-size: 11px;
   background: var(--bg-dark);
-  color: var(--text-muted);
+  color: var(--accent-sky);
   padding: 3px 8px;
   border-radius: 4px;
   border: 1px solid var(--border-color);
+  font-weight: 500;
 }
 
 .toolbar-right {
@@ -586,10 +726,11 @@ details[open] .chevron {
 .preview-viewport {
   flex: 1;
   overflow: auto;
-  display: flex;
-  justify-content: center;
   padding: 36px 20px;
-  background: radial-gradient(circle at center, #131d2e 0%, #070a10 100%);
+  background: radial-gradient(circle at center, #10192a 0%, #060a14 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .preview-viewport::-webkit-scrollbar {
@@ -602,15 +743,29 @@ details[open] .chevron {
   border-radius: 4px;
 }
 
+/* Multi-Page Container */
+.invoice-pages-container {
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+  transform-origin: top center;
+  transition: transform 0.15s ease-out;
+}
+
+/* Floating mobile actions (hidden by default on desktop) */
+.floating-mobile-actions {
+  display: none;
+}
+
 
 /* ==========================================================================
-   INVOICE SHEET (PIXEL-PERFECT REPLICA)
-   Dimensions: Standard A4 (210mm x 297mm) -> approx 794px x 1123px at 96 DPI
+   INVOICE PAGE (A4 SPECIFICATION: 210mm x 297mm -> 794px x 1123px)
    ========================================================================== */
 
-.invoice-sheet {
+.invoice-page {
   width: 794px;
   min-height: 1123px;
+  height: 1123px;
   background: #ffffff;
   color: #000000;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.6);
@@ -618,19 +773,19 @@ details[open] .chevron {
   position: relative;
   display: flex;
   flex-direction: column;
-  transform-origin: top center;
-  transition: transform 0.15s ease-out;
-  /* Prevent font scaling issues */
+  overflow: hidden;
+  box-sizing: border-box;
   -webkit-print-color-adjust: exact;
   print-color-adjust: exact;
 }
 
-/* 1. TOP HEADER */
+/* 1. TOP HEADER (PAGE 1) */
 .invoice-header {
   background: linear-gradient(90deg, #024b86 0%, #0077b6 35%, #0096c7 70%, #00b4d8 100%);
   color: #ffffff;
   position: relative;
   padding: 24px 38px 10px 38px;
+  flex-shrink: 0;
 }
 
 .header-inner {
@@ -646,8 +801,8 @@ details[open] .chevron {
 }
 
 .header-logo-container {
-  width: 62px;
-  height: 62px;
+  width: 60px;
+  height: 60px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -667,7 +822,7 @@ details[open] .chevron {
 }
 
 .header-titles .company-address {
-  font-size: 11.5px;
+  font-size: 11px;
   color: rgba(255, 255, 255, 0.92);
   margin-top: 3px;
   font-weight: 400;
@@ -697,12 +852,64 @@ details[open] .chevron {
   display: block;
 }
 
+/* CONTINUATION HEADER (FOR PAGE 2+) */
+.continuation-header {
+  background: linear-gradient(90deg, #024b86 0%, #0077b6 50%, #0096c7 100%);
+  color: #ffffff;
+  padding: 14px 38px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+
+.continuation-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.continuation-brand h3 {
+  font-family: 'Outfit', sans-serif;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #ffffff;
+}
+
+.continuation-badge-text {
+  font-size: 10.5px;
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  padding: 2px 8px;
+  border-radius: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.continuation-meta {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.continuation-meta span {
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.continuation-meta strong {
+  color: #ffffff;
+}
+
 /* 2. INVOICE META & TAX SECTION */
 .invoice-meta-section {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 36px;
-  padding: 22px 38px 14px 38px;
+  padding: 20px 38px 12px 38px;
+  flex-shrink: 0;
 }
 
 .meta-card {
@@ -734,7 +941,7 @@ details[open] .chevron {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 12.5px;
+  font-size: 12px;
   margin-bottom: 3px;
 }
 
@@ -755,10 +962,11 @@ details[open] .chevron {
 
 /* 3. INVOICE TO & PLACE OF SUPPLY */
 .invoice-to-section {
-  padding: 12px 38px 16px 38px;
+  padding: 10px 38px 14px 38px;
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
+  flex-shrink: 0;
 }
 
 .client-details {
@@ -766,7 +974,7 @@ details[open] .chevron {
 }
 
 .client-label {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 2px;
   color: #0284c7;
@@ -777,7 +985,7 @@ details[open] .chevron {
 
 .client-name {
   font-family: 'Outfit', sans-serif;
-  font-size: 18.5px;
+  font-size: 17.5px;
   font-weight: 700;
   color: #0f172a;
   line-height: 1.25;
@@ -785,9 +993,9 @@ details[open] .chevron {
 }
 
 .client-address-line {
-  font-size: 12px;
+  font-size: 11.5px;
   color: #475569;
-  line-height: 1.4;
+  line-height: 1.35;
 }
 
 .supply-badge {
@@ -796,7 +1004,7 @@ details[open] .chevron {
   gap: 7px;
   background-color: var(--inv-supply-bg);
   border: 1px solid var(--inv-supply-border);
-  padding: 6px 14px;
+  padding: 5px 12px;
   border-radius: 20px;
 }
 
@@ -806,16 +1014,15 @@ details[open] .chevron {
 }
 
 .supply-text {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--inv-supply-text);
   letter-spacing: 0.2px;
 }
 
-/* 4. LINE ITEMS TABLE (AUTO ADJUSTING) */
+/* 4. LINE ITEMS TABLE */
 .table-section {
-  padding: 4px 38px 16px 38px;
-  /* Auto-adjusting flex behavior */
+  padding: 4px 38px 14px 38px;
   flex-grow: 1;
 }
 
@@ -832,8 +1039,8 @@ details[open] .chevron {
 }
 
 .items-table th {
-  padding: 9px 10px;
-  font-size: 11.5px;
+  padding: 8px 10px;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.8px;
   text-transform: uppercase;
@@ -842,8 +1049,8 @@ details[open] .chevron {
 }
 
 .items-table td {
-  padding: 11px 12px;
-  font-size: 12px;
+  padding: 9.5px 12px;
+  font-size: 11.5px;
   color: #0f172a;
   border: 1.5px solid #7dd3fc;
   vertical-align: middle;
@@ -851,9 +1058,19 @@ details[open] .chevron {
   word-break: break-word;
 }
 
+/* Compact mode spacing */
+.compact-mode .items-table td {
+  padding: 6.5px 10px;
+  font-size: 11px;
+}
+
+.compact-mode .items-table th {
+  padding: 6.5px 8px;
+}
+
 /* Column Widths and Alignments */
 .col-sno {
-  width: 52px;
+  width: 48px;
   text-align: center;
 }
 
@@ -863,20 +1080,18 @@ details[open] .chevron {
 }
 
 .col-qty {
-  width: 62px;
+  width: 58px;
   text-align: center;
 }
 
 .col-rate {
-  width: 120px;
+  width: 115px;
   text-align: center;
-  font-family: inherit;
 }
 
 .col-amount {
-  width: 130px;
+  width: 125px;
   text-align: center;
-  font-family: inherit;
 }
 
 .items-table tbody td.col-sno {
@@ -904,20 +1119,35 @@ details[open] .chevron {
   font-weight: 500;
 }
 
-/* 5. INVOICE BOTTOM SECTION */
+/* Continued Badge at bottom of page 1 */
+.continuation-bar {
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  color: #0284c7;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 5. INVOICE BOTTOM SECTION (TOTALS & BANK) */
 .invoice-bottom-section {
-  padding: 8px 38px 12px 38px;
+  padding: 6px 38px 12px 38px;
   display: grid;
   grid-template-columns: 1.3fr 1fr;
-  gap: 28px;
+  gap: 26px;
   align-items: start;
+  flex-shrink: 0;
 }
 
 /* Left: Words and Bank Details */
 .bottom-left {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 12px;
 }
 
 .amount-in-words-box {
@@ -930,32 +1160,32 @@ details[open] .chevron {
   letter-spacing: 1px;
   color: #64748b;
   text-transform: uppercase;
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .words-value {
-  font-size: 13px;
+  font-size: 12.5px;
   font-weight: 700;
   font-style: italic;
   color: #0f172a;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 .bank-details-box {
   border-top: 1px dashed #cbd5e1;
-  padding-top: 10px;
+  padding-top: 8px;
 }
 
 .bank-header {
   display: flex;
   align-items: center;
   gap: 6px;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .bank-title {
   font-family: 'Outfit', sans-serif;
-  font-size: 12.5px;
+  font-size: 12px;
   font-weight: 800;
   letter-spacing: 1px;
   color: #0284c7;
@@ -964,9 +1194,9 @@ details[open] .chevron {
 
 .bank-grid {
   display: grid;
-  grid-template-columns: 95px 1fr;
-  row-gap: 3.5px;
-  font-size: 11.5px;
+  grid-template-columns: 90px 1fr;
+  row-gap: 3px;
+  font-size: 11px;
 }
 
 .bank-label {
@@ -986,15 +1216,15 @@ details[open] .chevron {
 }
 
 .calculations-box {
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .calc-row {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
-  font-size: 12.5px;
-  padding: 3px 6px;
+  font-size: 12px;
+  padding: 2.5px 4px;
 }
 
 .calc-row.hide {
@@ -1009,7 +1239,7 @@ details[open] .chevron {
 .calc-val {
   color: #0f172a;
   font-weight: 700;
-  font-size: 13px;
+  font-size: 12.5px;
   text-align: right;
 }
 
@@ -1017,39 +1247,39 @@ details[open] .chevron {
   background-color: #0284c7;
   color: #ffffff;
   border-radius: 6px;
-  padding: 10px 16px;
+  padding: 8px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
   box-shadow: 0 3px 8px rgba(2, 132, 199, 0.25);
-  margin-bottom: 18px;
+  margin-bottom: 14px;
 }
 
 .grand-total-label {
   font-family: 'Outfit', sans-serif;
-  font-size: 15px;
+  font-size: 14.5px;
   font-weight: 700;
   letter-spacing: 0.3px;
 }
 
 .grand-total-val {
   font-family: 'Outfit', sans-serif;
-  font-size: 17px;
+  font-size: 16.5px;
   font-weight: 800;
   letter-spacing: 0.5px;
 }
 
 .signatory-box {
   text-align: center;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .signatory-space {
-  height: 48px;
+  height: 42px;
 }
 
 .signatory-label {
-  font-size: 10.5px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 1.5px;
   color: #475569;
@@ -1058,29 +1288,30 @@ details[open] .chevron {
 
 /* 6. FOOTER */
 .invoice-footer {
-  padding: 10px 38px 20px 38px;
+  padding: 8px 38px 16px 38px;
   margin-top: auto;
+  flex-shrink: 0;
 }
 
 .footer-divider {
   height: 1px;
   background: #e2e8f0;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .footer-contacts {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 10.5px;
   color: #334155;
-  margin-bottom: 12px;
+  margin-bottom: 8px;
 }
 
 .contact-item {
   display: flex;
   align-items: center;
-  gap: 7px;
+  gap: 6px;
   font-weight: 500;
 }
 
@@ -1088,28 +1319,45 @@ details[open] .chevron {
   flex-shrink: 0;
 }
 
+.footer-bottom-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+}
+
 .footer-thankyou {
   text-align: center;
+  flex: 1;
 }
 
 .footer-thankyou p {
-  font-size: 11.5px;
+  font-size: 11px;
   color: #64748b;
   font-weight: 500;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .thankyou-accent-bar {
-  width: 80px;
-  height: 3px;
+  width: 70px;
+  height: 2.5px;
   background: #0096c7;
   border-radius: 2px;
   margin: 0 auto;
 }
 
+.page-indicator-badge {
+  font-size: 10px;
+  color: #94a3b8;
+  font-weight: 600;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+}
+
 
 /* ==========================================================================
-   PRINT MEDIA STYLES (1:1 PIXEL-PERFECT A4 PRINTING)
+   PRINT MEDIA STYLES (1:1 MULTI-PAGE A4 ACCURACY)
    ========================================================================== */
 
 @page {
@@ -1124,67 +1372,146 @@ details[open] .chevron {
     margin: 0 !important;
     padding: 0 !important;
     width: 210mm !important;
-    height: 297mm !important;
   }
 
-  /* Hide app sidebar, toolbars and controls completely */
+  /* Hide app sidebar, toolbars, mobile nav and controls completely */
+  .mobile-nav-bar,
   .sidebar,
   .preview-toolbar,
-  .preview-stage {
-    background: none !important;
-    padding: 0 !important;
-  }
-
-  .sidebar,
-  .preview-toolbar {
+  .floating-mobile-actions {
     display: none !important;
   }
 
-  .preview-viewport {
+  .preview-stage,
+  .preview-viewport,
+  .invoice-pages-container {
+    display: block !important;
     padding: 0 !important;
     margin: 0 !important;
     background: none !important;
     overflow: visible !important;
-    display: block !important;
+    transform: none !important;
   }
 
-  .invoice-sheet {
+  .invoice-page {
     width: 210mm !important;
     min-height: 297mm !important;
     height: 297mm !important;
+    max-height: 297mm !important;
+    margin: 0 !important;
+    padding: 0 !important;
     box-shadow: none !important;
     border-radius: 0 !important;
     transform: none !important;
-    margin: 0 !important;
-    page-break-after: avoid;
-    page-break-inside: avoid;
-  }
-
-  /* Ensure colors and backgrounds print precisely */
-  * {
+    page-break-after: always !important;
+    break-after: page !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
+
+  .invoice-page:last-child {
+    page-break-after: auto !important;
+    break-after: auto !important;
+  }
 }
 
+
 /* ==========================================================================
-   RESPONSIVE DESIGN (FOR LAPTOPS & TABLETS)
+   RESPONSIVE DESIGN (FOR PHONES & TABLETS)
    ========================================================================== */
 
-@media (max-width: 1100px) {
+@media (max-width: 850px) {
+  .mobile-nav-bar {
+    display: flex;
+  }
+
   .app-layout {
     flex-direction: column;
-    height: auto;
-    overflow: auto;
+    height: calc(100vh - 54px);
   }
 
   .sidebar {
     width: 100%;
     min-width: 100%;
-    height: auto;
+    height: 100%;
+    box-shadow: none;
+    border-right: none;
   }
 
-  .preview-stage {
-    min-height: 800px;
+  /* In mobile Edit Mode */
+  .app-layout.view-edit .sidebar {
+    display: flex;
+  }
+  .app-layout.view-edit .preview-stage {
+    display: none;
+  }
+
+  /* In mobile Preview Mode */
+  .app-layout.view-preview .sidebar {
+    display: none;
+  }
+  .app-layout.view-preview .preview-stage {
+    display: flex;
+    height: 100%;
+  }
+
+  /* Make sure inputs NEVER get squished on mobile */
+  .form-grid.grid-2 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .sidebar-scrollable {
+    padding: 14px 16px;
+  }
+
+  .form-section {
+    padding: 14px;
+    margin-bottom: 14px;
+  }
+
+  /* Line Item Calculation Row on Mobile */
+  .item-calc-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .item-calc-row .qty-field {
+    width: calc(35% - 4px);
+  }
+
+  .item-calc-row .rate-field {
+    width: calc(65% - 4px);
+  }
+
+  .item-calc-row .amount-field {
+    width: 100%;
+    align-items: stretch;
+    margin-top: 4px;
+  }
+
+  .amount-field .amount-value {
+    text-align: right;
+  }
+
+  /* Floating mobile print bar */
+  .floating-mobile-actions {
+    display: flex;
+    position: fixed;
+    bottom: 16px;
+    left: 16px;
+    right: 16px;
+    gap: 10px;
+    z-index: 50;
+  }
+
+  .btn-float {
+    flex: 1;
+    padding: 12px 16px;
+    font-size: 14px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   }
 }
