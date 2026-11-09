@@ -854,18 +854,37 @@ function showToast(message, type = 'info') {
 // ==========================================================================
 
 /**
- * Handles file reading for uploaded local file
+ * Handles file reading for uploaded local file (.pdf, .json, .csv)
  */
 function handleFiles(files) {
   if (!files || files.length === 0) return;
   const file = files[0];
-  const reader = new FileReader();
+  const lowerName = file.name.toLowerCase();
 
+  // 1. PDF File Upload
+  if (lowerName.endsWith('.pdf') || file.type === 'application/pdf') {
+    showToast(`Reading invoice PDF "${file.name}"...`, 'info');
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+      try {
+        await loadInvoiceFromPdf(e.target.result, file.name);
+      } catch (err) {
+        console.error('PDF parsing error:', err);
+        showToast('Error reading invoice PDF: ' + err.message, 'error');
+      }
+    };
+    reader.onerror = () => {
+      showToast('Failed to read local PDF file.', 'error');
+    };
+    reader.readAsArrayBuffer(file);
+    return;
+  }
+
+  // 2. Text-based files (.json, .csv)
+  const reader = new FileReader();
   reader.onload = (e) => {
     try {
       const content = e.target.result;
-      const lowerName = file.name.toLowerCase();
-
       if (lowerName.endsWith('.csv')) {
         loadInvoiceFromCsv(content, file.name);
       } else {
@@ -883,6 +902,192 @@ function handleFiles(files) {
   };
 
   reader.readAsText(file);
+}
+
+/**
+ * Parses and populates invoice/quote data from an uploaded PDF file
+ */
+async function loadInvoiceFromPdf(arrayBuffer, fileName) {
+  if (!window.pdfjsLib) {
+    throw new Error('PDF parsing engine not initialized. Please ensure pdf.js is loaded.');
+  }
+
+  const loadingTask = window.pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
+  const doc = await loadingTask.promise;
+
+  const allLines = [];
+
+  for (let pageNum = 1; pageNum <= doc.numPages; pageNum++) {
+    const page = await doc.getPage(pageNum);
+    const textContent = await page.getTextContent();
+
+    // Sort items top-to-bottom (Y desc) then left-to-right (X asc)
+    const sorted = textContent.items
+      .filter(it => it.str && it.str.trim())
+      .sort((a, b) => {
+        const diffY = b.transform[5] - a.transform[5];
+        if (Math.abs(diffY) > 3.5) return diffY;
+        return a.transform[4] - b.transform[4];
+      });
+
+    let currentY = null;
+    let currentLine = [];
+    sorted.forEach(item => {
+      if (currentY === null || Math.abs(item.transform[5] - currentY) > 4.5) {
+        if (currentLine.length > 0) allLines.push(currentLine);
+        currentLine = [item.str.trim()];
+        currentY = item.transform[5];
+      } else {
+        currentLine.push(item.str.trim());
+      }
+    });
+    if (currentLine.length > 0) allLines.push(currentLine);
+  }
+
+  let docType = 'INVOICE';
+  let invoiceNo = '';
+  let invoiceDate = '';
+  let poNumber = '';
+  let clientName = '';
+  let clientAddress1 = '';
+  let clientAddress2 = '';
+  let supplyState = 'Tamil Nadu';
+  let gstMode = 'without-gst';
+  const items = [];
+
+  const lineStrings = allLines.map(l => l.join(' '));
+
+  let inClientSection = false;
+  let clientLinesRead = 0;
+  let inTableSection = false;
+
+  for (let idx = 0; idx < lineStrings.length; idx++) {
+    const line = lineStrings[idx];
+    const upper = line.toUpperCase();
+
+    // 1. Document Type (INVOICE, QUOTATION, QUOTE)
+    if (upper.includes('QUOTATION') && !upper.includes('DETAILS')) {
+      docType = 'QUOTATION';
+    } else if (upper.includes('QUOTE') && !upper.includes('DETAILS') && !upper.includes('QUOTATION')) {
+      docType = 'QUOTE';
+    } else if (upper.includes('INVOICE') && !upper.includes('DETAILS') && !upper.includes('TO')) {
+      docType = 'INVOICE';
+    }
+
+    // 2. Document Number
+    const invMatch = line.match(/(?:Invoice|Quote|Quotation)\s*No\s*[.:]?\s*([A-Za-z0-9\/\s-]+?)(?=\s*GST|\s*Date|\s*State|\s*$)/i)
+      || line.match(/MAC\s*\/\s*\d+\s*\/\s*[\w-]+/i);
+    if (invMatch && !invoiceNo) {
+      invoiceNo = (invMatch[1] || invMatch[0]).replace(/\s+/g, '');
+    }
+
+    // 3. Document Date
+    const dateMatch = line.match(/(?:Date\s*[.:]?\s*)?(\d{1,2}[-/\.]\d{1,2}[-/\.]\d{4})/i)
+      || line.match(/(\d{4}-\d{2}-\d{2})/);
+    if (dateMatch && !invoiceDate && (line.toLowerCase().includes('date') || dateMatch[0].length >= 10)) {
+      invoiceDate = normalizeDateForInput(dateMatch[1] || dateMatch[0]);
+    }
+
+    // 4. Customer PO Number (Optional)
+    const poMatch = line.match(/Customer\s*PO\s*[:.]?\s*([A-Za-z0-9\/\s-]+?)(?=\s*State|\s*Code|\s*$)/i)
+      || line.match(/PO\s*No[.:\s]*([^\s|]+)/i);
+    if (poMatch && !poNumber) {
+      poNumber = (poMatch[1] || poMatch[0]).replace(/\s*\/\s*/g, '/').replace(/\s+/g, ' ').trim();
+    }
+
+    // 5. Client Section
+    if (upper.includes('INVOICE TO') || upper.includes('I N V O I C E T O') || upper.includes('QUOTE TO') || upper.includes('QUOTATION TO') || upper.includes('CLIENT DETAILS')) {
+      inClientSection = true;
+      clientLinesRead = 0;
+      continue;
+    }
+
+    if (inClientSection) {
+      if (upper.includes('SUPPLY') || line.includes('Supply:')) {
+        const sMatch = line.match(/Supply\s*:\s*([^|\n]+)/i);
+        if (sMatch) supplyState = sMatch[1].trim();
+      } else if (upper.includes('S.NO') || upper.includes('ITEM DESCRIPTION') || upper.includes('S . NO')) {
+        inClientSection = false;
+        inTableSection = true;
+      } else if (clientLinesRead === 0 && line.trim()) {
+        clientName = line.trim();
+        clientLinesRead++;
+      } else if (clientLinesRead === 1 && line.trim()) {
+        clientAddress1 = line.replace(/\s*,\s*/g, ',').replace(/\s*-\s*/g, '-').trim();
+        clientLinesRead++;
+      } else if (clientLinesRead === 2 && line.trim()) {
+        clientAddress2 = line.replace(/\s*,\s*/g, ',').replace(/\s*-\s*/g, '-').trim();
+        clientLinesRead++;
+      }
+    }
+
+    // 6. Table Header Detection
+    if (upper.includes('ITEM DESCRIPTION') && (upper.includes('QTY') || upper.includes('RATE'))) {
+      inTableSection = true;
+      continue;
+    }
+
+    // Stop table when bottom section begins
+    if (upper.includes('AMOUNT IN WORDS') || upper.includes('SUB TOTAL') || upper.includes('BANK DETAILS') || upper.includes('GRAND TOTAL')) {
+      inTableSection = false;
+    }
+
+    // 7. Table Line Items Extraction
+    const itemMatch = line.match(/^(\d+)\s+(.+?)\s+(\d+(?:\.\d+)?)\s+([\d,]+(?:\.\d{2})?)\s+([\d,]+(?:\.\d{2})?)$/);
+    if (itemMatch) {
+      items.push({
+        id: 'item-' + Date.now() + '-' + itemMatch[1],
+        description: itemMatch[2].trim(),
+        qty: parseFloat(itemMatch[3]) || 1,
+        rate: parseFloat(itemMatch[4].replace(/,/g, '')) || 0
+      });
+    }
+
+    // 8. GST Mode Detection
+    if (line.includes('CGST') || line.includes('SGST')) {
+      if (line.includes('₹ 0') || line.includes('₹0') || line.endsWith(' 0')) {
+        gstMode = 'without-gst';
+      } else {
+        gstMode = 'with-gst';
+      }
+    } else if (line.includes('IGST') && !line.includes('₹ 0') && !line.includes('₹0')) {
+      gstMode = 'igst';
+    }
+  }
+
+  // Populate application state
+  appState.docType = docType;
+  if (invoiceNo) appState.invoiceNo = invoiceNo;
+  if (invoiceDate) appState.invoiceDate = invoiceDate;
+  appState.poNumber = poNumber || '';
+  if (clientName) appState.clientName = clientName;
+  if (clientAddress1) appState.clientAddress1 = clientAddress1;
+  if (clientAddress2) appState.clientAddress2 = clientAddress2;
+  if (supplyState) appState.supplyState = supplyState;
+  appState.gstMode = gstMode;
+
+  if (items.length > 0) {
+    appState.items = items;
+  }
+
+  // Sync editor controls & preview
+  syncFormValues();
+  renderEditorItems();
+  updatePreview();
+  saveState();
+
+  // If on mobile, switch to Edit view
+  const appLayout = document.getElementById('appLayout');
+  const tabBtnEdit = document.getElementById('tabBtnEdit');
+  const tabBtnPreview = document.getElementById('tabBtnPreview');
+  if (appLayout && window.innerWidth <= 850) {
+    appLayout.classList.remove('view-preview');
+    appLayout.classList.add('view-edit');
+    if (tabBtnEdit) tabBtnEdit.classList.add('active');
+    if (tabBtnPreview) tabBtnPreview.classList.remove('active');
+  }
+
+  showToast(`Loaded ${items.length} items from PDF "${fileName}"! Ready to edit.`, 'success');
 }
 
 /**

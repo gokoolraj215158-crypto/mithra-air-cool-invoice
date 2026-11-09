@@ -68,11 +68,14 @@
           </button>
         </div>
         <div class="quick-actions-sub">
-          <button type="button" class="btn btn-upload" id="btnUploadFile" title="Upload local invoice / quote file to edit">
+          <button type="button" class="btn btn-upload" id="btnUploadFile" title="Upload local invoice / quote PDF to edit">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
             </svg>
-            Upload / Edit
+            Upload PDF
           </button>
           <button type="button" class="btn btn-secondary" id="btnNewInvoice" title="Clear for new invoice">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -87,23 +90,26 @@
             Sample
           </button>
         </div>
-        <input type="file" id="fileUploadInput" accept=".json,.csv,application/json,text/csv,text/plain" style="display: none;">
+        <input type="file" id="fileUploadInput" accept=".pdf,.json,.csv,application/pdf,application/json,text/csv,text/plain" style="display: none;">
       </div>
 
       <div class="sidebar-scrollable">
-        <!-- QUICK UPLOAD CARD TO EDIT LOCAL FILE -->
-        <div class="file-upload-card" id="fileDropZone" title="Click or drag & drop to edit invoice from file">
+        <!-- QUICK UPLOAD CARD TO EDIT LOCAL PDF FILE -->
+        <div class="file-upload-card" id="fileDropZone" title="Click or drag & drop to edit invoice from PDF">
           <div class="upload-icon-wrap">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <path d="M9 15h6"/>
+              <path d="M12 12v6"/>
             </svg>
           </div>
           <div class="upload-text-wrap">
-            <div class="upload-title">Edit from Local File</div>
-            <div class="upload-subtext">Upload saved <code>.json</code> or <code>.csv</code> to edit</div>
+            <div class="upload-title">Edit Invoice from PDF</div>
+            <div class="upload-subtext">Upload any saved invoice/quote <code>.pdf</code> to load &amp; edit</div>
           </div>
           <button type="button" class="btn btn-sm btn-accent" id="btnUploadCardAction">
-            Browse
+            Browse PDF
           </button>
         </div>
 
@@ -386,6 +392,19 @@
 
   <!-- Toast Notification Container -->
   <div id="appToast" class="app-toast"></div>
+
+  <!-- PDF.js Library for Parsing Invoices from Local PDF Files -->
+  <script src="lib/pdf.min.js"></script>
+  <script>
+    if (!window.pdfjsLib) {
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
+    }
+  </script>
+  <script>
+    if (window.pdfjsLib) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+    }
+  </script>
 
   <script src="app.js"></script>
 </body>
