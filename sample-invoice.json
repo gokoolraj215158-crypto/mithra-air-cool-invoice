@@ -1,0 +1,53 @@
+{
+  "app": "Mithra Air Cool Invoice Suite",
+  "version": "1.0",
+  "exportDate": "09-11-2026",
+  "docType": "INVOICE",
+  "invoiceNo": "MAC/15/25-26",
+  "invoiceDate": "2026-08-20",
+  "formattedDate": "20-08-2026",
+  "poNumber": "PO/PEC/2026/089",
+  "clientName": "Prathyusha Engineering College",
+  "clientAddress1": "Aranvoyalkuppam,Poonaamallee-TiruvallurRoad,Tiruvallur",
+  "clientAddress2": "Tamil Nadu 602025",
+  "supplyState": "Tamil Nadu",
+  "gstMode": "without-gst",
+  "layoutDensity": "multi",
+  "items": [
+    {
+      "description": "Seminar Hall Ductable blower motor service",
+      "qty": 1,
+      "rate": 4200.00
+    },
+    {
+      "description": "Seminar Hall Ductable blower motor labour",
+      "qty": 1,
+      "rate": 3000.00
+    },
+    {
+      "description": "AC Capacitor 50MFD Replacement",
+      "qty": 2,
+      "rate": 850.00
+    },
+    {
+      "description": "Transport",
+      "qty": 1,
+      "rate": 450.00
+    }
+  ],
+  "company": {
+    "name": "MITHRA AIR COOL",
+    "address": "17,RajivGandhiStreet,AranvoyalVillage,Thiruvallur – 602025",
+    "gstNo": "33CRPPA9823D12V",
+    "state": "Tamil Nadu",
+    "stateCode": "33",
+    "bankName": "Indian Bank",
+    "accountNo": "6621884173",
+    "branch": "Valarpuram",
+    "ifsc": "IDIB000V060",
+    "beneficiary": "R Ajith",
+    "phone": "(+91) 8610916412",
+    "email": "mithraair@gmail.com"
+  }
+}
+

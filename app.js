@@ -9,6 +9,7 @@ const SAMPLE_DATA = {
   docType: 'INVOICE', // 'INVOICE', 'QUOTATION', 'QUOTE'
   invoiceNo: 'MAC/11/25-26',
   invoiceDate: '2026-07-14',
+  poNumber: '', // Optional Customer PO Number
   clientName: 'Prathyusha Engineering College',
   clientAddress1: 'Aranvoyalkuppam,Poonaamallee-TiruvallurRoad,Tiruvallur',
   clientAddress2: 'Tamil Nadu 602025',
@@ -113,7 +114,7 @@ function convertNumberToWords(amount) {
     remaining %= 10000000;
   }
 
-  // Lakhs (>= 1,00,000)
+  // Lakhs (>= 1,00,00,000)
   if (remaining >= 100000) {
     const lakhs = Math.floor(remaining / 100000);
     parts.push(convertTwoDigits(lakhs) + ' Lakh');
@@ -143,7 +144,7 @@ function convertNumberToWords(amount) {
 }
 
 // ==========================================================================
-// FORMATTING UTILITIES
+// FORMATTING UTILITIES (DD-MM-YYYY DATE FORMAT)
 // ==========================================================================
 function formatCurrency(val) {
   const num = Number(val) || 0;
@@ -153,13 +154,81 @@ function formatCurrency(val) {
   });
 }
 
-function formatDateDisplay(dateStr) {
-  if (!dateStr) return '';
-  const parts = dateStr.split('-');
-  if (parts.length === 3) {
-    return `${parts[2]} / ${parts[1]} / ${parts[0]}`;
+/**
+ * Formats any date input into DD-MM-YYYY format
+ * Example: '2026-07-14' -> '14-07-2026'
+ */
+function formatDateDisplay(dateVal) {
+  if (!dateVal) return '';
+  const str = String(dateVal).trim();
+
+  // If already in DD-MM-YYYY format (e.g. 14-07-2026)
+  if (/^\d{2}-\d{2}-\d{4}$/.test(str)) {
+    return str;
   }
-  return dateStr;
+
+  // If YYYY-MM-DD format from <input type="date"> (e.g. 2026-07-14)
+  const ymdMatch = str.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (ymdMatch) {
+    const year = ymdMatch[1];
+    const month = ymdMatch[2].padStart(2, '0');
+    const day = ymdMatch[3].padStart(2, '0');
+    return `${day}-${month}-${year}`;
+  }
+
+  // If DD/MM/YYYY or DD.MM.YYYY
+  const dmyMatch = str.match(/^(\d{1,2})[\/\.](\d{1,2})[\/\.](\d{4})/);
+  if (dmyMatch) {
+    const day = dmyMatch[1].padStart(2, '0');
+    const month = dmyMatch[2].padStart(2, '0');
+    const year = dmyMatch[3];
+    return `${day}-${month}-${year}`;
+  }
+
+  // Fallback parsing via standard Date object
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  return str;
+}
+
+/**
+ * Normalizes any date string to YYYY-MM-DD for standard HTML <input type="date">
+ */
+function normalizeDateForInput(dateVal) {
+  if (!dateVal) {
+    return new Date().toISOString().split('T')[0];
+  }
+  const str = String(dateVal).trim();
+
+  // Already YYYY-MM-DD
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return str;
+  }
+
+  // DD-MM-YYYY or DD/MM/YYYY
+  const dmyMatch = str.match(/^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})/);
+  if (dmyMatch) {
+    const day = dmyMatch[1].padStart(2, '0');
+    const month = dmyMatch[2].padStart(2, '0');
+    const year = dmyMatch[3];
+    return `${year}-${month}-${day}`;
+  }
+
+  const d = new Date(str);
+  if (!isNaN(d.getTime())) {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  }
+
+  return new Date().toISOString().split('T')[0];
 }
 
 function escapeHtml(str) {
@@ -376,6 +445,12 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
               <span class="meta-label">${escapeHtml(docName)} Date</span>
               <span class="meta-value">${escapeHtml(formatDateDisplay(appState.invoiceDate))}</span>
             </div>
+            ${appState.poNumber && appState.poNumber.trim() ? `
+            <div class="meta-row">
+              <span class="meta-label">Customer PO</span>
+              <span class="meta-value">${escapeHtml(appState.poNumber.trim())}</span>
+            </div>
+            ` : ''}
           </div>
         </div>
 
@@ -428,6 +503,7 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
         </div>
         <div class="continuation-meta">
           <span>${escapeHtml(docName)} No: <strong>${escapeHtml(appState.invoiceNo)}</strong></span>
+          ${appState.poNumber && appState.poNumber.trim() ? `<span>PO: <strong>${escapeHtml(appState.poNumber.trim())}</strong></span>` : ''}
           <span>Date: <strong>${escapeHtml(formatDateDisplay(appState.invoiceDate))}</strong></span>
           <span>Page <strong>${pageIndex + 1} of ${totalPages}</strong></span>
         </div>
@@ -738,6 +814,303 @@ function updateDocLabels() {
 
   const labelDocDate = document.getElementById('labelDocDate');
   if (labelDocDate) labelDocDate.textContent = `${docName} Date`;
+
+  const labelPoNumber = document.getElementById('labelPoNumber');
+  if (labelPoNumber) {
+    labelPoNumber.textContent = isInv ? 'Customer PO Number' : 'Customer PO / Ref Number';
+  }
+}
+
+function updateDateHint() {
+  const hintEl = document.getElementById('hintInvoiceDateDisplay');
+  if (hintEl) {
+    hintEl.textContent = formatDateDisplay(appState.invoiceDate);
+  }
+}
+
+// Toast notification helper
+let toastTimeout = null;
+function showToast(message, type = 'info') {
+  const toast = document.getElementById('appToast');
+  if (!toast) return;
+
+  const iconSvg = type === 'success'
+    ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>`
+    : (type === 'error'
+      ? `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="15" y1="9" x2="9" y2="15"/><line x1="9" y1="9" x2="15" y2="15"/></svg>`
+      : `<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>`);
+
+  toast.innerHTML = `${iconSvg}<span>${message}</span>`;
+  toast.className = `app-toast toast-${type} show`;
+
+  if (toastTimeout) clearTimeout(toastTimeout);
+  toastTimeout = setTimeout(() => {
+    toast.classList.remove('show');
+  }, 3800);
+}
+
+// ==========================================================================
+// FILE IMPORT & EXPORT ENGINE (LOCAL FILE EDITING)
+// ==========================================================================
+
+/**
+ * Handles file reading for uploaded local file
+ */
+function handleFiles(files) {
+  if (!files || files.length === 0) return;
+  const file = files[0];
+  const reader = new FileReader();
+
+  reader.onload = (e) => {
+    try {
+      const content = e.target.result;
+      const lowerName = file.name.toLowerCase();
+
+      if (lowerName.endsWith('.csv')) {
+        loadInvoiceFromCsv(content, file.name);
+      } else {
+        // Try JSON first (handles .json or any text JSON)
+        loadInvoiceFromJson(content, file.name);
+      }
+    } catch (err) {
+      console.error('File load error:', err);
+      showToast('Error reading file: ' + err.message, 'error');
+    }
+  };
+
+  reader.onerror = () => {
+    showToast('Failed to read local file.', 'error');
+  };
+
+  reader.readAsText(file);
+}
+
+/**
+ * Parses and populates invoice/quote data from JSON
+ */
+function loadInvoiceFromJson(jsonText, fileName) {
+  let data;
+  try {
+    data = JSON.parse(jsonText);
+  } catch (err) {
+    // If not valid JSON, check if it might be CSV
+    if (jsonText.includes(',')) {
+      loadInvoiceFromCsv(jsonText, fileName);
+      return;
+    }
+    showToast('Invalid JSON file format. Please check the file.', 'error');
+    return;
+  }
+
+  // Handle nested object wrappers if present (e.g. { invoice: { ... } })
+  const root = data.invoice || data.data || data;
+
+  // 1. Document Type
+  const rawType = (root.docType || root.doc_type || root.type || '').toUpperCase();
+  if (['INVOICE', 'QUOTATION', 'QUOTE'].includes(rawType)) {
+    appState.docType = rawType;
+  }
+
+  // 2. Document Number
+  if (root.invoiceNo !== undefined || root.invoice_no !== undefined || root.docNo !== undefined || root.number !== undefined) {
+    appState.invoiceNo = String(root.invoiceNo || root.invoice_no || root.docNo || root.number || '');
+  }
+
+  // 3. Document Date (normalize to YYYY-MM-DD for picker)
+  const rawDate = root.invoiceDate || root.invoice_date || root.date || root.docDate || root.formattedDate;
+  if (rawDate) {
+    appState.invoiceDate = normalizeDateForInput(rawDate);
+  }
+
+  // 4. Customer PO Number (Optional)
+  if (root.poNumber !== undefined || root.po_number !== undefined || root.poNo !== undefined || root.customerPo !== undefined || root.po !== undefined) {
+    appState.poNumber = String(root.poNumber || root.po_number || root.poNo || root.customerPo || root.po || '').trim();
+  }
+
+  // 5. Client details
+  if (root.clientName !== undefined || root.client_name !== undefined || root.customerName !== undefined || root.client !== undefined) {
+    appState.clientName = String(root.clientName || root.client_name || root.customerName || root.client || '');
+  }
+  if (root.clientAddress1 !== undefined || root.client_address1 !== undefined || root.address1 !== undefined) {
+    appState.clientAddress1 = String(root.clientAddress1 || root.client_address1 || root.address1 || '');
+  }
+  if (root.clientAddress2 !== undefined || root.client_address2 !== undefined || root.address2 !== undefined) {
+    appState.clientAddress2 = String(root.clientAddress2 || root.client_address2 || root.address2 || '');
+  }
+  if (root.supplyState !== undefined || root.supply_state !== undefined || root.state !== undefined) {
+    appState.supplyState = String(root.supplyState || root.supply_state || root.state || 'Tamil Nadu');
+  }
+
+  // 6. GST Mode & Layout Density
+  const rawGst = root.gstMode || root.gst_mode;
+  if (['without-gst', 'with-gst', 'igst'].includes(rawGst)) {
+    appState.gstMode = rawGst;
+  }
+  const rawDensity = root.layoutDensity || root.layout_density;
+  if (['multi', 'compact'].includes(rawDensity)) {
+    appState.layoutDensity = rawDensity;
+  }
+
+  // 7. Line Items
+  const rawItems = root.items || root.lineItems || root.line_items || root.products || root.services;
+  if (Array.isArray(rawItems) && rawItems.length > 0) {
+    appState.items = rawItems.map((item, idx) => ({
+      id: 'item-' + Date.now() + '-' + idx,
+      description: item.description || item.desc || item.name || item.title || '',
+      qty: parseFloat(item.qty || item.quantity || item.count || 1) || 1,
+      rate: parseFloat(item.rate || item.price || item.unitPrice || item.unit_rate || 0) || 0
+    }));
+  }
+
+  // 8. Company defaults (if present)
+  if (root.company && typeof root.company === 'object') {
+    appState.company = { ...appState.company, ...root.company };
+  }
+
+  // Sync editor & preview
+  syncFormValues();
+  renderEditorItems();
+  updatePreview();
+  saveState();
+
+  // If on mobile, switch to Edit view
+  const appLayout = document.getElementById('appLayout');
+  const tabBtnEdit = document.getElementById('tabBtnEdit');
+  const tabBtnPreview = document.getElementById('tabBtnPreview');
+  if (appLayout && window.innerWidth <= 850) {
+    appLayout.classList.remove('view-preview');
+    appLayout.classList.add('view-edit');
+    if (tabBtnEdit) tabBtnEdit.classList.add('active');
+    if (tabBtnPreview) tabBtnPreview.classList.remove('active');
+  }
+
+  showToast(`Loaded "${appState.invoiceNo || 'Document'}" from ${fileName}! Ready to edit.`, 'success');
+}
+
+/**
+ * Parses and populates invoice data from CSV file
+ */
+function loadInvoiceFromCsv(csvText, fileName) {
+  const lines = csvText.split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  if (lines.length === 0) {
+    showToast('The CSV file is empty.', 'error');
+    return;
+  }
+
+  const items = [];
+  let isItemSection = false;
+
+  for (let line of lines) {
+    // Simple CSV parser supporting quotes
+    const cells = line.split(',').map(c => c.trim().replace(/^["']|["']$/g, ''));
+    if (cells.length < 2) continue;
+
+    const key = cells[0].toLowerCase();
+    const val = cells[1];
+
+    if (key.includes('description') || key.includes('item') || key.includes('s.no')) {
+      isItemSection = true;
+      continue;
+    }
+
+    if (!isItemSection) {
+      if (key.includes('invoice no') || key.includes('doc no') || key === 'number') {
+        appState.invoiceNo = val;
+      } else if (key.includes('po') || key.includes('purchase order')) {
+        appState.poNumber = val;
+      } else if (key.includes('date')) {
+        appState.invoiceDate = normalizeDateForInput(val);
+      } else if (key.includes('client') || key.includes('customer')) {
+        appState.clientName = val;
+      } else if (key.includes('address 1') || key.includes('address1')) {
+        appState.clientAddress1 = val;
+      } else if (key.includes('address 2') || key.includes('address2')) {
+        appState.clientAddress2 = val;
+      } else if (key.includes('supply') || key.includes('place')) {
+        appState.supplyState = val;
+      }
+    } else {
+      // Line item row: [Description, Qty, Rate] or [S.No, Description, Qty, Rate, Amount]
+      let desc = '';
+      let qty = 1;
+      let rate = 0;
+
+      if (cells.length >= 3 && !isNaN(parseFloat(cells[1]))) {
+        desc = cells[0];
+        qty = parseFloat(cells[1]) || 1;
+        rate = parseFloat(cells[2]) || 0;
+      } else if (cells.length >= 4 && !isNaN(parseFloat(cells[2]))) {
+        desc = cells[1];
+        qty = parseFloat(cells[2]) || 1;
+        rate = parseFloat(cells[3]) || 0;
+      }
+
+      if (desc) {
+        items.push({
+          id: 'item-' + Date.now() + '-' + items.length,
+          description: desc,
+          qty: qty,
+          rate: rate
+        });
+      }
+    }
+  }
+
+  if (items.length > 0) {
+    appState.items = items;
+  }
+
+  syncFormValues();
+  renderEditorItems();
+  updatePreview();
+  saveState();
+
+  showToast(`Loaded ${items.length} items from CSV "${fileName}"! Ready to edit.`, 'success');
+}
+
+/**
+ * Exports current invoice state to a local JSON file
+ */
+function exportInvoiceToFile() {
+  const safeDocNo = (appState.invoiceNo || 'DRAFT').replace(/[^a-zA-Z0-9_-]/g, '_');
+  const formattedDate = formatDateDisplay(appState.invoiceDate);
+  const docType = appState.docType || 'INVOICE';
+  const filename = `${docType}_${safeDocNo}_${formattedDate}.json`;
+
+  const exportPayload = {
+    app: 'Mithra Air Cool Invoice Suite',
+    version: '1.0',
+    exportDate: formatDateDisplay(new Date()),
+    docType: appState.docType,
+    invoiceNo: appState.invoiceNo,
+    invoiceDate: appState.invoiceDate,
+    formattedDate: formattedDate,
+    poNumber: appState.poNumber || '',
+    clientName: appState.clientName,
+    clientAddress1: appState.clientAddress1,
+    clientAddress2: appState.clientAddress2,
+    supplyState: appState.supplyState,
+    gstMode: appState.gstMode,
+    layoutDensity: appState.layoutDensity,
+    items: appState.items.map(item => ({
+      description: item.description,
+      qty: Number(item.qty) || 0,
+      rate: Number(item.rate) || 0
+    })),
+    company: appState.company
+  };
+
+  const jsonBlob = new Blob([JSON.stringify(exportPayload, null, 2)], { type: 'application/json' });
+  const downloadUrl = URL.createObjectURL(jsonBlob);
+  const a = document.createElement('a');
+  a.href = downloadUrl;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(downloadUrl);
+
+  showToast(`Saved "${filename}" to your computer!`, 'success');
 }
 
 // ==========================================================================
@@ -760,9 +1133,11 @@ function bindFormInputs() {
   // Invoice / Document Meta
   const inputInvoiceNo = document.getElementById('inputInvoiceNo');
   const inputInvoiceDate = document.getElementById('inputInvoiceDate');
+  const inputPoNumber = document.getElementById('inputPoNumber');
 
   inputInvoiceNo.value = appState.invoiceNo;
-  inputInvoiceDate.value = appState.invoiceDate;
+  inputInvoiceDate.value = normalizeDateForInput(appState.invoiceDate);
+  updateDateHint();
 
   inputInvoiceNo.addEventListener('input', (e) => {
     appState.invoiceNo = e.target.value;
@@ -772,9 +1147,20 @@ function bindFormInputs() {
 
   inputInvoiceDate.addEventListener('change', (e) => {
     appState.invoiceDate = e.target.value;
+    updateDateHint();
     updatePreview();
     saveState();
   });
+
+  // Customer PO Number (Optional)
+  if (inputPoNumber) {
+    inputPoNumber.value = appState.poNumber || '';
+    inputPoNumber.addEventListener('input', (e) => {
+      appState.poNumber = e.target.value;
+      updatePreview();
+      saveState();
+    });
+  }
 
   // Client Info
   const inputClientName = document.getElementById('inputClientName');
@@ -877,6 +1263,58 @@ function bindFormInputs() {
   document.getElementById('btnAddItem').addEventListener('click', addLineItem);
   document.getElementById('btnPrintInvoice').addEventListener('click', () => window.print());
 
+  // Save / Export File Button
+  const btnSaveFile = document.getElementById('btnSaveFile');
+  if (btnSaveFile) {
+    btnSaveFile.addEventListener('click', exportInvoiceToFile);
+  }
+
+  // Upload / Import File (Local File Editing)
+  const fileUploadInput = document.getElementById('fileUploadInput');
+  const btnUploadFile = document.getElementById('btnUploadFile');
+  const btnUploadCardAction = document.getElementById('btnUploadCardAction');
+  const fileDropZone = document.getElementById('fileDropZone');
+
+  if (fileUploadInput) {
+    fileUploadInput.addEventListener('change', (e) => {
+      handleFiles(e.target.files);
+      // Reset input so re-uploading the same file still triggers change
+      e.target.value = '';
+    });
+  }
+
+  if (btnUploadFile && fileUploadInput) {
+    btnUploadFile.addEventListener('click', () => fileUploadInput.click());
+  }
+
+  if (btnUploadCardAction && fileUploadInput) {
+    btnUploadCardAction.addEventListener('click', (e) => {
+      e.stopPropagation();
+      fileUploadInput.click();
+    });
+  }
+
+  if (fileDropZone && fileUploadInput) {
+    fileDropZone.addEventListener('click', () => fileUploadInput.click());
+
+    fileDropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      fileDropZone.classList.add('drag-over');
+    });
+
+    fileDropZone.addEventListener('dragleave', () => {
+      fileDropZone.classList.remove('drag-over');
+    });
+
+    fileDropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      fileDropZone.classList.remove('drag-over');
+      if (e.dataTransfer && e.dataTransfer.files) {
+        handleFiles(e.dataTransfer.files);
+      }
+    });
+  }
+
   document.getElementById('btnLoadSample').addEventListener('click', () => {
     if (confirm('Load original sample invoice data? Any unsaved edits will be replaced.')) {
       appState = JSON.parse(JSON.stringify(SAMPLE_DATA));
@@ -884,6 +1322,7 @@ function bindFormInputs() {
       renderEditorItems();
       updatePreview();
       saveState();
+      showToast('Sample invoice data loaded.', 'info');
     }
   });
 
@@ -900,6 +1339,7 @@ function bindFormInputs() {
 
       appState.invoiceNo = nextNo;
       appState.invoiceDate = today;
+      appState.poNumber = '';
       appState.clientName = '';
       appState.clientAddress1 = '';
       appState.clientAddress2 = '';
@@ -917,6 +1357,7 @@ function bindFormInputs() {
       renderEditorItems();
       updatePreview();
       saveState();
+      showToast('Created new blank invoice MAC/' + nextNo, 'info');
     }
   });
 
@@ -933,12 +1374,19 @@ function syncFormValues() {
   docTypeBtns.forEach(b => b.classList.toggle('active', b.dataset.doctype === docType));
   updateDocLabels();
 
-  document.getElementById('inputInvoiceNo').value = appState.invoiceNo;
-  document.getElementById('inputInvoiceDate').value = appState.invoiceDate;
-  document.getElementById('inputClientName').value = appState.clientName;
-  document.getElementById('inputClientAddress1').value = appState.clientAddress1;
-  document.getElementById('inputClientAddress2').value = appState.clientAddress2;
-  document.getElementById('inputSupplyState').value = appState.supplyState;
+  document.getElementById('inputInvoiceNo').value = appState.invoiceNo || '';
+  document.getElementById('inputInvoiceDate').value = normalizeDateForInput(appState.invoiceDate);
+  updateDateHint();
+
+  const inputPoNumber = document.getElementById('inputPoNumber');
+  if (inputPoNumber) {
+    inputPoNumber.value = appState.poNumber || '';
+  }
+
+  document.getElementById('inputClientName').value = appState.clientName || '';
+  document.getElementById('inputClientAddress1').value = appState.clientAddress1 || '';
+  document.getElementById('inputClientAddress2').value = appState.clientAddress2 || '';
+  document.getElementById('inputSupplyState').value = appState.supplyState || '';
 
   const gstRadio = document.querySelector(`input[name="gstMode"][value="${appState.gstMode}"]`);
   if (gstRadio) gstRadio.checked = true;
