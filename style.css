@@ -751,7 +751,7 @@ body {
   background: rgba(239, 68, 68, 0.15);
 }
 
-/* Roomy 3-column calculation row */
+/* Roomy 4-column calculation row: HSN + Qty + Rate + Amount */
 .item-calc-row {
   display: flex;
   align-items: flex-end;
@@ -759,9 +759,21 @@ body {
   margin-top: 10px;
 }
 
+.item-calc-row .hsn-field {
+  width: 92px;
+  min-width: 80px;
+  flex-shrink: 0;
+  margin-bottom: 0;
+}
+
+.item-hsn-input {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 12px;
+}
+
 .item-calc-row .qty-field {
   width: 76px;
-  min-width: 68px;
+  min-width: 65px;
   flex-shrink: 0;
   margin-bottom: 0;
 }
@@ -801,6 +813,76 @@ body {
   text-align: right;
   width: 100%;
   box-sizing: border-box;
+}
+
+/* Terms & Conditions Editor */
+.terms-toggle-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: var(--accent-sky);
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.terms-toggle-label input {
+  accent-color: #0284c7;
+  cursor: pointer;
+}
+
+.terms-editor-wrap {
+  margin-top: 8px;
+}
+
+.terms-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  color: var(--text-main);
+  font-size: 12.5px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 80px;
+  line-height: 1.5;
+  transition: all var(--transition-fast);
+  box-sizing: border-box;
+}
+
+.terms-textarea:focus {
+  outline: none;
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.2);
+}
+
+.terms-preset-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  flex-wrap: wrap;
+}
+
+.terms-preset-bar .preset-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.btn-preset {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-muted);
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.btn-preset:hover {
+  background: rgba(56, 189, 248, 0.15);
+  border-color: var(--accent-sky);
+  color: var(--accent-sky);
 }
 
 /* Collapsible Details */
@@ -1315,6 +1397,39 @@ details[open] .chevron {
 .items-table tbody td.col-desc {
   text-align: left;
   font-weight: 500;
+  vertical-align: middle;
+}
+
+.col-desc-text {
+  font-weight: 500;
+  color: #0f172a;
+  line-height: 1.35;
+}
+
+.col-desc-hsn {
+  margin-top: 3px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9.5px;
+  color: #475569;
+  background: #f0f9ff;
+  border: 1px solid #bae6fd;
+  padding: 1px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.3px;
+}
+
+.col-desc-hsn .hsn-tag-label {
+  font-weight: 700;
+  color: #0284c7;
+  font-size: 9px;
+}
+
+.col-desc-hsn .hsn-tag-value {
+  font-weight: 600;
+  color: #0f172a;
 }
 
 .items-table tbody td.col-qty {
@@ -1420,6 +1535,44 @@ details[open] .chevron {
 .bank-val {
   color: #0f172a;
   font-weight: 700;
+}
+
+/* Terms & Conditions Box on Document (Bottom Left) */
+.terms-conditions-box {
+  margin-top: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-left: 3px solid #0096c7;
+  border-radius: 6px;
+  padding: 6px 10px;
+}
+
+.terms-header {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  color: #0284c7;
+  margin-bottom: 3px;
+  text-transform: uppercase;
+}
+
+.terms-list {
+  margin: 0;
+  padding-left: 14px;
+  font-size: 9.5px;
+  color: #334155;
+  line-height: 1.4;
+}
+
+.terms-list li {
+  margin-bottom: 2px;
+}
+
+.terms-list li:last-child {
+  margin-bottom: 0;
 }
 
 /* Right: Calculations and Grand Total */
@@ -1693,12 +1846,16 @@ details[open] .chevron {
     gap: 8px;
   }
 
+  .item-calc-row .hsn-field {
+    width: calc(34% - 4px);
+  }
+
   .item-calc-row .qty-field {
-    width: calc(35% - 4px);
+    width: calc(26% - 4px);
   }
 
   .item-calc-row .rate-field {
-    width: calc(65% - 4px);
+    width: calc(40% - 4px);
   }
 
   .item-calc-row .amount-field {

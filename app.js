@@ -5,6 +5,19 @@
  */
 
 // --- Default Data matching original invoice sample ---
+const DEFAULT_QUOTE_TERMS = [
+  'Quotation valid for 30 days from date of issue.',
+  '50% advance along with confirmed work order.',
+  'Any additional work or spares will be charged extra.',
+  'Subject to Thiruvallur jurisdiction.'
+];
+
+const DEFAULT_INVOICE_TERMS = [
+  'Payment within 15 days of invoice date.',
+  '30 days service warranty on labour.',
+  'Subject to Thiruvallur jurisdiction.'
+];
+
 const SAMPLE_DATA = {
   docType: 'INVOICE', // 'INVOICE', 'QUOTATION', 'QUOTE'
   invoiceNo: 'MAC/11/25-26',
@@ -16,22 +29,31 @@ const SAMPLE_DATA = {
   supplyState: 'Tamil Nadu',
   gstMode: 'without-gst', // 'without-gst', 'with-gst', 'igst'
   layoutDensity: 'multi', // 'multi', 'compact'
+  showTerms: true,
+  terms: [
+    'Payment within 15 days of invoice date.',
+    '30 days service warranty on labour.',
+    'Subject to Thiruvallur jurisdiction.'
+  ],
   items: [
     {
       id: 'item-1',
       description: 'Seminar Hall Ductable blower motor service',
+      hsnCode: '998719',
       qty: 1,
       rate: 4200.00
     },
     {
       id: 'item-2',
       description: 'Seminar Hall Ductable blower motor labour',
+      hsnCode: '998719',
       qty: 1,
       rate: 3000.00
     },
     {
       id: 'item-3',
       description: 'Transport',
+      hsnCode: '996511',
       qty: 1,
       rate: 450.00
     }
@@ -39,7 +61,7 @@ const SAMPLE_DATA = {
   company: {
     name: 'MITHRA AIR COOL',
     address: '17,RajivGandhiStreet,AranvoyalVillage,Thiruvallur – 602025',
-    gstNo: '33CRPPA9823D12V',
+    gstNo: '33CRPPA9823D1ZV',
     state: 'Tamil Nadu',
     stateCode: '33',
     bankName: 'Indian Bank',
@@ -48,7 +70,7 @@ const SAMPLE_DATA = {
     ifsc: 'IDIB000V060',
     beneficiary: 'R Ajith',
     phone: '(+91) 8610916412',
-    email: 'mithraair@gmail.com'
+    email: 'mithraaircoolindia@gmail.com'
   }
 };
 
@@ -246,7 +268,8 @@ function escapeHtml(str) {
 function paginateItems(items, isCompact) {
   // Page 1 capacity with full header & metadata:
   // If all items fit on single page with bottom section:
-  const singlePageMax = isCompact ? 11 : 8;
+  const hasTerms = appState.showTerms !== false && Array.isArray(appState.terms) && appState.terms.some(t => t.trim());
+  const singlePageMax = isCompact ? 10 : (hasTerms ? 7 : 8);
   if (items.length <= singlePageMax) {
     return [items.map((item, idx) => ({ ...item, globalIndex: idx + 1 }))];
   }
@@ -314,6 +337,10 @@ function renderEditorItems() {
         <input type="text" class="item-desc-input" list="serviceSuggestions" value="${escapeHtml(item.description)}" placeholder="e.g. Ductable blower motor service">
       </div>
       <div class="item-calc-row">
+        <div class="form-group hsn-field">
+          <label>HSN / SAC</label>
+          <input type="text" class="item-hsn-input" value="${escapeHtml(item.hsnCode || '')}" placeholder="e.g. 9987">
+        </div>
         <div class="form-group qty-field">
           <label>Qty</label>
           <input type="number" class="item-qty-input" value="${item.qty}" min="1" step="1" inputmode="numeric">
@@ -331,6 +358,7 @@ function renderEditorItems() {
 
     // Attach row events
     const descInput = rowCard.querySelector('.item-desc-input');
+    const hsnInput = rowCard.querySelector('.item-hsn-input');
     const qtyInput = rowCard.querySelector('.item-qty-input');
     const rateInput = rowCard.querySelector('.item-rate-input');
     const removeBtn = rowCard.querySelector('.btn-remove-item');
@@ -340,6 +368,14 @@ function renderEditorItems() {
       updatePreview();
       saveState();
     });
+
+    if (hsnInput) {
+      hsnInput.addEventListener('input', (e) => {
+        item.hsnCode = e.target.value;
+        updatePreview();
+        saveState();
+      });
+    }
 
     qtyInput.addEventListener('input', (e) => {
       item.qty = parseFloat(e.target.value) || 0;
@@ -518,7 +554,15 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
     rowsHtml += `
       <tr>
         <td class="col-sno">${item.globalIndex}</td>
-        <td class="col-desc">${escapeHtml(item.description) || '&nbsp;'}</td>
+        <td class="col-desc">
+          <div class="col-desc-text">${escapeHtml(item.description) || '&nbsp;'}</div>
+          ${item.hsnCode && item.hsnCode.trim() ? `
+            <div class="col-desc-hsn">
+              <span class="hsn-tag-label">HSN/SAC:</span>
+              <span class="hsn-tag-value">${escapeHtml(item.hsnCode.trim())}</span>
+            </div>
+          ` : ''}
+        </td>
         <td class="col-qty">${item.qty}</td>
         <td class="col-rate">${Number(item.rate).toFixed(2)}</td>
         <td class="col-amount">${itemAmount.toFixed(2)}</td>
@@ -620,6 +664,29 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
               <span class="bank-val">${escapeHtml(appState.company.beneficiary)}</span>
             </div>
           </div>
+
+          ${(() => {
+            if (appState.showTerms === false || !Array.isArray(appState.terms)) return '';
+            const validTerms = appState.terms.map(t => t.trim()).filter(Boolean);
+            if (validTerms.length === 0) return '';
+            return `
+              <div class="terms-conditions-box">
+                <div class="terms-header">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="#0284c7" stroke-width="2">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14 2 14 8 20 8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10 9 9 9 8 9"/>
+                  </svg>
+                  <span>TERMS &amp; CONDITIONS</span>
+                </div>
+                <ol class="terms-list">
+                  ${validTerms.map(t => `<li>${escapeHtml(t)}</li>`).join('')}
+                </ol>
+              </div>
+            `;
+          })()}
         </div>
 
         <!-- Right Side: Sub Total, Taxes, Grand Total, Signatory -->
@@ -769,6 +836,7 @@ function addLineItem() {
   const newItem = {
     id: 'item-' + Date.now(),
     description: '',
+    hsnCode: '',
     qty: 1,
     rate: 0
   };
@@ -912,8 +980,29 @@ async function loadInvoiceFromPdf(arrayBuffer, fileName) {
     throw new Error('PDF parsing engine not initialized. Please ensure pdf.js is loaded.');
   }
 
-  const loadingTask = window.pdfjsLib.getDocument({ data: new Uint8Array(arrayBuffer) });
-  const doc = await loadingTask.promise;
+  // Configure worker options for fake in-memory worker (avoids CORS / file:// errors)
+  try {
+    if (window.pdfjsWorker) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+    } else if (!window.pdfjsLib.GlobalWorkerOptions.workerSrc) {
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+    }
+  } catch (wErr) {
+    console.warn('Worker configuration note:', wErr);
+  }
+
+  let doc;
+  try {
+    const loadingTask = window.pdfjsLib.getDocument({
+      data: new Uint8Array(arrayBuffer),
+      useSystemFonts: true
+    });
+    doc = await loadingTask.promise;
+  } catch (docErr) {
+    console.warn('PDF getDocument attempt 1 failed, retrying with raw buffer...', docErr);
+    const retryTask = window.pdfjsLib.getDocument(new Uint8Array(arrayBuffer));
+    doc = await retryTask.promise;
+  }
 
   const allLines = [];
 
@@ -954,12 +1043,14 @@ async function loadInvoiceFromPdf(arrayBuffer, fileName) {
   let supplyState = 'Tamil Nadu';
   let gstMode = 'without-gst';
   const items = [];
+  const extractedTerms = [];
 
   const lineStrings = allLines.map(l => l.join(' '));
 
   let inClientSection = false;
   let clientLinesRead = 0;
   let inTableSection = false;
+  let inTermsSection = false;
 
   for (let idx = 0; idx < lineStrings.length; idx++) {
     const line = lineStrings[idx];
@@ -1032,15 +1123,50 @@ async function loadInvoiceFromPdf(arrayBuffer, fileName) {
       inTableSection = false;
     }
 
-    // 7. Table Line Items Extraction
+    // Terms & Conditions Detection in PDF
+    if (upper.includes('TERMS & CONDITIONS') || upper.includes('TERMS AND CONDITIONS')) {
+      inTermsSection = true;
+      continue;
+    }
+
+    if (inTermsSection) {
+      if (upper.includes('AUTHORIZED SIGNATORY') || upper.includes('BANK DETAILS') || line.includes('gmail.com') || upper.includes('THANK YOU')) {
+        inTermsSection = false;
+      } else {
+        const cleanTerm = line.replace(/^\d+[\.\)]\s*/, '').trim();
+        if (cleanTerm && cleanTerm.length > 3) {
+          extractedTerms.push(cleanTerm);
+        }
+      }
+    }
+
+    // 7. Table Line Items Extraction (Handles S.No, Description, HSN/SAC, Qty, Rate, Amount)
     const itemMatch = line.match(/^(\d+)\s+(.+?)\s+(\d+(?:\.\d+)?)\s+([\d,]+(?:\.\d{2})?)\s+([\d,]+(?:\.\d{2})?)$/);
     if (itemMatch) {
+      let rawDesc = itemMatch[2].trim();
+      let hsn = '';
+
+      const hsnMatch = rawDesc.match(/HSN(?:\/SAC)?\s*[:.-]?\s*([A-Za-z0-9]+)/i);
+      if (hsnMatch) {
+        hsn = hsnMatch[1];
+        rawDesc = rawDesc.replace(/HSN(?:\/SAC)?\s*[:.-]?\s*[A-Za-z0-9]+/i, '').trim();
+      }
+
       items.push({
         id: 'item-' + Date.now() + '-' + itemMatch[1],
-        description: itemMatch[2].trim(),
+        description: rawDesc,
+        hsnCode: hsn,
         qty: parseFloat(itemMatch[3]) || 1,
         rate: parseFloat(itemMatch[4].replace(/,/g, '')) || 0
       });
+      continue;
+    }
+
+    // Check if subsequent standalone line is HSN/SAC code for previous item
+    const standAloneHsn = line.match(/^HSN(?:\/SAC)?\s*[:.-]?\s*([A-Za-z0-9]+)$/i);
+    if (standAloneHsn && items.length > 0 && !items[items.length - 1].hsnCode) {
+      items[items.length - 1].hsnCode = standAloneHsn[1];
+      continue;
     }
 
     // 8. GST Mode Detection
@@ -1055,6 +1181,32 @@ async function loadInvoiceFromPdf(arrayBuffer, fileName) {
     }
   }
 
+  // Fallback line item extraction if strict regex found 0 items
+  if (items.length === 0) {
+    for (let line of lineStrings) {
+      const relaxedMatch = line.match(/^(?:(\d+)\s+)?([A-Za-z].+?)\s+(\d+(?:\.\d+)?)\s+([\d,]+(?:\.\d{2})?)\s+([\d,]+(?:\.\d{2})?)$/);
+      if (relaxedMatch) {
+        const desc = relaxedMatch[2].trim();
+        if (!desc.toUpperCase().includes('TOTAL') && !desc.toUpperCase().includes('GST') && !desc.toUpperCase().includes('BANK')) {
+          let cleanDesc = desc;
+          let hsn = '';
+          const hsnMatch = cleanDesc.match(/HSN(?:\/SAC)?\s*[:.-]?\s*([A-Za-z0-9]+)/i);
+          if (hsnMatch) {
+            hsn = hsnMatch[1];
+            cleanDesc = cleanDesc.replace(/HSN(?:\/SAC)?\s*[:.-]?\s*[A-Za-z0-9]+/i, '').trim();
+          }
+          items.push({
+            id: 'item-' + Date.now() + '-' + items.length,
+            description: cleanDesc,
+            hsnCode: hsn,
+            qty: parseFloat(relaxedMatch[3]) || 1,
+            rate: parseFloat(relaxedMatch[4].replace(/,/g, '')) || 0
+          });
+        }
+      }
+    }
+  }
+
   // Populate application state
   appState.docType = docType;
   if (invoiceNo) appState.invoiceNo = invoiceNo;
@@ -1065,6 +1217,11 @@ async function loadInvoiceFromPdf(arrayBuffer, fileName) {
   if (clientAddress2) appState.clientAddress2 = clientAddress2;
   if (supplyState) appState.supplyState = supplyState;
   appState.gstMode = gstMode;
+
+  if (extractedTerms.length > 0) {
+    appState.terms = extractedTerms;
+    appState.showTerms = true;
+  }
 
   if (items.length > 0) {
     appState.items = items;
@@ -1087,7 +1244,7 @@ async function loadInvoiceFromPdf(arrayBuffer, fileName) {
     if (tabBtnPreview) tabBtnPreview.classList.remove('active');
   }
 
-  showToast(`Loaded ${items.length} items from PDF "${fileName}"! Ready to edit.`, 'success');
+  showToast(`Loaded "${appState.invoiceNo || 'Document'}" from PDF "${fileName}"! Ready to edit.`, 'success');
 }
 
 /**
@@ -1156,18 +1313,27 @@ function loadInvoiceFromJson(jsonText, fileName) {
     appState.layoutDensity = rawDensity;
   }
 
-  // 7. Line Items
+  // 7. Terms & Conditions
+  if (root.showTerms !== undefined) {
+    appState.showTerms = Boolean(root.showTerms);
+  }
+  if (Array.isArray(root.terms)) {
+    appState.terms = root.terms;
+  }
+
+  // 8. Line Items (with HSN/SAC code)
   const rawItems = root.items || root.lineItems || root.line_items || root.products || root.services;
   if (Array.isArray(rawItems) && rawItems.length > 0) {
     appState.items = rawItems.map((item, idx) => ({
       id: 'item-' + Date.now() + '-' + idx,
       description: item.description || item.desc || item.name || item.title || '',
+      hsnCode: item.hsnCode || item.hsn || item.sac || '',
       qty: parseFloat(item.qty || item.quantity || item.count || 1) || 1,
       rate: parseFloat(item.rate || item.price || item.unitPrice || item.unit_rate || 0) || 0
     }));
   }
 
-  // 8. Company defaults (if present)
+  // 9. Company defaults (if present)
   if (root.company && typeof root.company === 'object') {
     appState.company = { ...appState.company, ...root.company };
   }
@@ -1235,25 +1401,28 @@ function loadInvoiceFromCsv(csvText, fileName) {
         appState.supplyState = val;
       }
     } else {
-      // Line item row: [Description, Qty, Rate] or [S.No, Description, Qty, Rate, Amount]
+      // Line item row: [Description, HSN/SAC, Qty, Rate] or [Description, Qty, Rate]
       let desc = '';
+      let hsn = '';
       let qty = 1;
       let rate = 0;
 
-      if (cells.length >= 3 && !isNaN(parseFloat(cells[1]))) {
+      if (cells.length >= 4 && !isNaN(parseFloat(cells[2]))) {
+        desc = cells[0];
+        hsn = cells[1];
+        qty = parseFloat(cells[2]) || 1;
+        rate = parseFloat(cells[3]) || 0;
+      } else if (cells.length >= 3 && !isNaN(parseFloat(cells[1]))) {
         desc = cells[0];
         qty = parseFloat(cells[1]) || 1;
         rate = parseFloat(cells[2]) || 0;
-      } else if (cells.length >= 4 && !isNaN(parseFloat(cells[2]))) {
-        desc = cells[1];
-        qty = parseFloat(cells[2]) || 1;
-        rate = parseFloat(cells[3]) || 0;
       }
 
       if (desc) {
         items.push({
           id: 'item-' + Date.now() + '-' + items.length,
           description: desc,
+          hsnCode: hsn,
           qty: qty,
           rate: rate
         });
@@ -1297,8 +1466,11 @@ function exportInvoiceToFile() {
     supplyState: appState.supplyState,
     gstMode: appState.gstMode,
     layoutDensity: appState.layoutDensity,
+    showTerms: appState.showTerms !== false,
+    terms: appState.terms || [],
     items: appState.items.map(item => ({
       description: item.description,
+      hsnCode: item.hsnCode || '',
       qty: Number(item.qty) || 0,
       rate: Number(item.rate) || 0
     })),
@@ -1329,6 +1501,18 @@ function bindFormInputs() {
       const type = btn.dataset.doctype;
       appState.docType = type;
       docTypeBtns.forEach(b => b.classList.toggle('active', b.dataset.doctype === type));
+
+      // Auto-switch terms preset if matching defaults
+      if (type === 'INVOICE' && JSON.stringify(appState.terms) === JSON.stringify(DEFAULT_QUOTE_TERMS)) {
+        appState.terms = [...DEFAULT_INVOICE_TERMS];
+        const inputTermsText = document.getElementById('inputTermsText');
+        if (inputTermsText) inputTermsText.value = appState.terms.join('\n');
+      } else if ((type === 'QUOTATION' || type === 'QUOTE') && JSON.stringify(appState.terms) === JSON.stringify(DEFAULT_INVOICE_TERMS)) {
+        appState.terms = [...DEFAULT_QUOTE_TERMS];
+        const inputTermsText = document.getElementById('inputTermsText');
+        if (inputTermsText) inputTermsText.value = appState.terms.join('\n');
+      }
+
       updateDocLabels();
       updatePreview();
       saveState();
@@ -1464,6 +1648,65 @@ function bindFormInputs() {
   bindCompanyInput('inputPhone', 'phone');
   bindCompanyInput('inputEmail', 'email');
 
+  // Terms & Conditions Controls
+  const toggleShowTerms = document.getElementById('toggleShowTerms');
+  const inputTermsText = document.getElementById('inputTermsText');
+  const btnPresetQuoteTerms = document.getElementById('btnPresetQuoteTerms');
+  const btnPresetInvoiceTerms = document.getElementById('btnPresetInvoiceTerms');
+  const btnClearTerms = document.getElementById('btnClearTerms');
+
+  if (toggleShowTerms) {
+    toggleShowTerms.checked = appState.showTerms !== false;
+    toggleShowTerms.addEventListener('change', (e) => {
+      appState.showTerms = e.target.checked;
+      updatePreview();
+      saveState();
+    });
+  }
+
+  if (inputTermsText) {
+    inputTermsText.value = Array.isArray(appState.terms) ? appState.terms.join('\n') : '';
+    inputTermsText.addEventListener('input', (e) => {
+      appState.terms = e.target.value.split('\n');
+      updatePreview();
+      saveState();
+    });
+  }
+
+  if (btnPresetQuoteTerms) {
+    btnPresetQuoteTerms.addEventListener('click', () => {
+      appState.terms = [...DEFAULT_QUOTE_TERMS];
+      appState.showTerms = true;
+      if (toggleShowTerms) toggleShowTerms.checked = true;
+      if (inputTermsText) inputTermsText.value = appState.terms.join('\n');
+      updatePreview();
+      saveState();
+      showToast('Applied standard Quote terms.', 'info');
+    });
+  }
+
+  if (btnPresetInvoiceTerms) {
+    btnPresetInvoiceTerms.addEventListener('click', () => {
+      appState.terms = [...DEFAULT_INVOICE_TERMS];
+      appState.showTerms = true;
+      if (toggleShowTerms) toggleShowTerms.checked = true;
+      if (inputTermsText) inputTermsText.value = appState.terms.join('\n');
+      updatePreview();
+      saveState();
+      showToast('Applied standard Invoice terms.', 'info');
+    });
+  }
+
+  if (btnClearTerms) {
+    btnClearTerms.addEventListener('click', () => {
+      appState.terms = [];
+      if (inputTermsText) inputTermsText.value = '';
+      updatePreview();
+      saveState();
+      showToast('Terms cleared.', 'info');
+    });
+  }
+
   // Top Buttons
   document.getElementById('btnAddItem').addEventListener('click', addLineItem);
   document.getElementById('btnPrintInvoice').addEventListener('click', () => window.print());
@@ -1549,10 +1792,13 @@ function bindFormInputs() {
       appState.clientAddress1 = '';
       appState.clientAddress2 = '';
       appState.gstMode = 'without-gst';
+      appState.showTerms = true;
+      appState.terms = (appState.docType === 'INVOICE') ? [...DEFAULT_INVOICE_TERMS] : [...DEFAULT_QUOTE_TERMS];
       appState.items = [
         {
           id: 'item-' + Date.now(),
           description: '',
+          hsnCode: '',
           qty: 1,
           rate: 0
         }
@@ -1562,7 +1808,7 @@ function bindFormInputs() {
       renderEditorItems();
       updatePreview();
       saveState();
-      showToast('Created new blank invoice MAC/' + nextNo, 'info');
+      showToast('Created new blank document MAC/' + nextNo, 'info');
     }
   });
 
@@ -1595,6 +1841,16 @@ function syncFormValues() {
 
   const gstRadio = document.querySelector(`input[name="gstMode"][value="${appState.gstMode}"]`);
   if (gstRadio) gstRadio.checked = true;
+
+  const inputTermsText = document.getElementById('inputTermsText');
+  if (inputTermsText) {
+    inputTermsText.value = Array.isArray(appState.terms) ? appState.terms.join('\n') : '';
+  }
+
+  const toggleShowTerms = document.getElementById('toggleShowTerms');
+  if (toggleShowTerms) {
+    toggleShowTerms.checked = appState.showTerms !== false;
+  }
 }
 
 // ==========================================================================
@@ -1704,6 +1960,18 @@ function loadState() {
       if (parsed && parsed.items && parsed.items.length > 0) {
         appState = parsed;
       }
+    }
+    // Backward compatibility fallbacks
+    if (!Array.isArray(appState.terms)) {
+      appState.terms = (appState.docType === 'INVOICE') ? [...DEFAULT_INVOICE_TERMS] : [...DEFAULT_QUOTE_TERMS];
+    }
+    if (appState.showTerms === undefined) {
+      appState.showTerms = true;
+    }
+    if (Array.isArray(appState.items)) {
+      appState.items.forEach(it => {
+        if (it.hsnCode === undefined) it.hsnCode = '';
+      });
     }
   } catch (e) {
     console.warn('LocalStorage load failed:', e);

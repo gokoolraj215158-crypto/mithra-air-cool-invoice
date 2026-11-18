@@ -252,6 +252,30 @@
             </div>
           </div>
 
+          <!-- TERMS & CONDITIONS SECTION -->
+          <div class="form-section">
+            <div class="section-title-between">
+              <div class="section-title">
+                <span class="section-num">5</span>
+                <h3>Terms &amp; Conditions</h3>
+              </div>
+              <label class="terms-toggle-label" title="Enable or disable printing terms on invoice/quote">
+                <input type="checkbox" id="toggleShowTerms" checked>
+                <span>Include on Document</span>
+              </label>
+            </div>
+            <p class="section-hint">Specify terms for this quote or invoice (one condition per line):</p>
+            <div class="terms-editor-wrap">
+              <textarea id="inputTermsText" class="terms-textarea" rows="4" placeholder="Enter terms &amp; conditions (one per line)..."></textarea>
+              <div class="terms-preset-bar">
+                <span class="preset-label">Quick Presets:</span>
+                <button type="button" class="btn btn-sm btn-preset" id="btnPresetQuoteTerms" title="Apply standard quotation terms">Quote Terms</button>
+                <button type="button" class="btn btn-sm btn-preset" id="btnPresetInvoiceTerms" title="Apply standard invoice terms">Invoice Terms</button>
+                <button type="button" class="btn btn-sm btn-preset" id="btnClearTerms" title="Clear all terms">Clear</button>
+              </div>
+            </div>
+          </div>
+
           <!-- OPTIONAL PRESETS & COMPANY DETAILS -->
           <details class="form-section collapsible-section">
             <summary>
@@ -393,16 +417,23 @@
   <!-- Toast Notification Container -->
   <div id="appToast" class="app-toast"></div>
 
-  <!-- PDF.js Library for Parsing Invoices from Local PDF Files -->
+  <!-- PDF.js Library & In-Memory Worker for Bulletproof Local PDF Parsing -->
   <script src="lib/pdf.min.js"></script>
+  <script src="lib/pdf.worker.min.js"></script>
   <script>
     if (!window.pdfjsLib) {
       document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"><\/script>');
     }
   </script>
   <script>
+    // Ensure in-memory fake worker or workerSrc is ready for local file:// and http:// origins
     if (window.pdfjsLib) {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+      if (window.pdfjsWorker) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+      } else {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+      }
     }
   </script>
 
