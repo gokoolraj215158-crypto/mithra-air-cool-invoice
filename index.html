@@ -142,7 +142,7 @@
                   <label for="inputInvoiceDate" id="labelDocDate">Invoice Date</label>
                   <span class="badge-date-format">DD-MM-YYYY</span>
                 </div>
-                <input type="date" id="inputInvoiceDate" required>
+                <input type="date" id="inputInvoiceDate">
                 <div class="date-format-note">Selected: <strong id="hintInvoiceDateDisplay">14-07-2026</strong></div>
               </div>
             </div>
@@ -417,26 +417,20 @@
   <!-- Toast Notification Container -->
   <div id="appToast" class="app-toast"></div>
 
-  <!-- PDF.js Library & In-Memory Worker for Bulletproof Local PDF Parsing -->
-  <script src="lib/pdf.min.js"></script>
-  <script src="lib/pdf.worker.min.js"></script>
+  <!-- Load PDF.js from this repository's root; the worker is loaded by PDF.js, not as a page script. -->
+  <script src="./pdf.min.js"></script>
   <script>
     if (!window.pdfjsLib) {
       document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
-      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"><\/script>');
     }
   </script>
   <script>
-    // Ensure in-memory fake worker or workerSrc is ready for local file:// and http:// origins
     if (window.pdfjsLib) {
-      if (window.pdfjsWorker) {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = '';
-      } else {
-        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
-      }
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
     }
   </script>
 
   <script src="app.js"></script>
+  <script src="app-fixes.js"></script>
 </body>
 </html>
