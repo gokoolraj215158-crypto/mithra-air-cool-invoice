@@ -543,7 +543,7 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
         <div class="continuation-meta">
           <span>${escapeHtml(docName)} No: <strong>${escapeHtml(appState.invoiceNo)}</strong></span>
           ${appState.poNumber && appState.poNumber.trim() ? `<span>PO: <strong>${escapeHtml(appState.poNumber.trim())}</strong></span>` : ''}
-          <span>Date: <strong>${escapeHtml(formatDateDisplay(appState.invoiceDate))}</strong></span>
+          ${appState.invoiceDate && String(appState.invoiceDate).trim() ? `<span>Date: <strong>${escapeHtml(formatDateDisplay(appState.invoiceDate))}</strong></span>` : ''}
           <span>Page <strong>${pageIndex + 1} of ${totalPages}</strong></span>
         </div>
       </div>
@@ -894,9 +894,12 @@ function updateDocLabels() {
 
 function updateDateHint() {
   const hintEl = document.getElementById('hintInvoiceDateDisplay');
-  if (hintEl) {
-    hintEl.textContent = formatDateDisplay(appState.invoiceDate);
-  }
+  const prefixEl = document.getElementById('hintInvoiceDatePrefix');
+  const omitEl = document.getElementById('hintDateOmitNote');
+  const formattedDate = formatDateDisplay(appState.invoiceDate);
+  if (hintEl) hintEl.textContent = formattedDate || 'No date';
+  if (prefixEl) prefixEl.textContent = formattedDate ? 'Selected: ' : '';
+  if (omitEl) omitEl.style.display = formattedDate ? 'none' : 'inline';
 }
 
 // Toast notification helper
@@ -945,7 +948,7 @@ function handleFiles(files) {
       }
     };
     reader.onerror = () => {
-      showToast('Failed to read local PDF file.', 'error');
+      showToast('Could not read this PDF. Try saving it again as a standard PDF and re-uploading.', 'error');
     };
     reader.readAsArrayBuffer(file);
     return;
@@ -998,7 +1001,9 @@ async function loadInvoiceFromPdf(arrayBuffer, fileName) {
   try {
     const loadingTask = window.pdfjsLib.getDocument({
       data: new Uint8Array(arrayBuffer),
-      useSystemFonts: true
+      useSystemFonts: true,
+      disableWorker: true,
+      isEvalSupported: false
     });
     doc = await loadingTask.promise;
   } catch (docErr) {
@@ -1034,6 +1039,10 @@ async function loadInvoiceFromPdf(arrayBuffer, fileName) {
       }
     });
     if (currentLine.length > 0) allLines.push(currentLine);
+  }
+
+  if (!allLines.length) {
+    throw new Error('This PDF has no selectable text. Scanned or image-only PDFs cannot be imported for editing; use a text-based invoice PDF or JSON/CSV file.');
   }
 
   let docType = 'INVOICE';
@@ -1543,6 +1552,28 @@ function bindFormInputs() {
     updatePreview();
     saveState();
   });
+
+  const btnClearInvoiceDate = document.getElementById('btnClearInvoiceDate');
+  const btnTodayInvoiceDate = document.getElementById('btnTodayInvoiceDate');
+  if (btnClearInvoiceDate) {
+    btnClearInvoiceDate.addEventListener('click', () => {
+      appState.invoiceDate = '';
+      inputInvoiceDate.value = '';
+      updateDateHint();
+      updatePreview();
+      saveState();
+    });
+  }
+  if (btnTodayInvoiceDate) {
+    btnTodayInvoiceDate.addEventListener('click', () => {
+      const today = new Date();
+      appState.invoiceDate = [today.getFullYear(), String(today.getMonth() + 1).padStart(2, '0'), String(today.getDate()).padStart(2, '0')].join('-');
+      inputInvoiceDate.value = appState.invoiceDate;
+      updateDateHint();
+      updatePreview();
+      saveState();
+    });
+  }
 
   // Customer PO Number (Optional)
   if (inputPoNumber) {
