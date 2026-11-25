@@ -221,10 +221,11 @@ function formatDateDisplay(dateVal) {
 
 /**
  * Normalizes any date string to YYYY-MM-DD for standard HTML <input type="date">
+ * Returns '' if empty/optional
  */
 function normalizeDateForInput(dateVal) {
-  if (!dateVal) {
-    return new Date().toISOString().split('T')[0];
+  if (!dateVal || !String(dateVal).trim()) {
+    return '';
   }
   const str = String(dateVal).trim();
 
@@ -250,7 +251,7 @@ function normalizeDateForInput(dateVal) {
     return `${year}-${month}-${day}`;
   }
 
-  return new Date().toISOString().split('T')[0];
+  return '';
 }
 
 function escapeHtml(str) {
@@ -477,10 +478,12 @@ function buildPageHtml(pageIndex, totalPages, pageItems, isLastPage, subTotal, g
               <span class="meta-label">${escapeHtml(docName)} No.</span>
               <span class="meta-value">${escapeHtml(appState.invoiceNo)}</span>
             </div>
+            ${appState.invoiceDate && String(appState.invoiceDate).trim() ? `
             <div class="meta-row">
               <span class="meta-label">${escapeHtml(docName)} Date</span>
               <span class="meta-value">${escapeHtml(formatDateDisplay(appState.invoiceDate))}</span>
             </div>
+            ` : ''}
             ${appState.poNumber && appState.poNumber.trim() ? `
             <div class="meta-row">
               <span class="meta-label">Customer PO</span>

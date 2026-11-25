@@ -137,13 +137,25 @@
                 <label for="inputInvoiceNo" id="labelDocNo">Invoice Number</label>
                 <input type="text" id="inputInvoiceNo" value="MAC/11/25-26" placeholder="e.g. MAC/11/25-26" required>
               </div>
-              <div class="form-group">
+              <div class="form-group" id="groupInvoiceDate">
                 <div class="label-with-badge">
                   <label for="inputInvoiceDate" id="labelDocDate">Invoice Date</label>
-                  <span class="badge-date-format">DD-MM-YYYY</span>
+                  <span class="badge-optional" id="badgeDateOptional">Optional</span>
                 </div>
-                <input type="date" id="inputInvoiceDate">
-                <div class="date-format-note">Selected: <strong id="hintInvoiceDateDisplay">14-07-2026</strong></div>
+                <div class="date-input-row">
+                  <input type="date" id="inputInvoiceDate">
+                  <button type="button" class="btn btn-sm btn-clear-date" id="btnClearInvoiceDate" title="Remove date from invoice">
+                    Clear
+                  </button>
+                  <button type="button" class="btn btn-sm btn-today-date" id="btnTodayInvoiceDate" title="Set to today's date">
+                    Today
+                  </button>
+                </div>
+                <div class="date-format-note">
+                  <span id="hintInvoiceDatePrefix">Selected: </span>
+                  <strong id="hintInvoiceDateDisplay">14-07-2026</strong>
+                  <span class="hint-date-omit" id="hintDateOmitNote" style="display: none;">(Leave blank to omit date)</span>
+                </div>
               </div>
             </div>
 
@@ -417,20 +429,26 @@
   <!-- Toast Notification Container -->
   <div id="appToast" class="app-toast"></div>
 
-  <!-- Load PDF.js from this repository's root; the worker is loaded by PDF.js, not as a page script. -->
-  <script src="./pdf.min.js"></script>
+  <!-- PDF.js Library & In-Memory Worker for Bulletproof Local PDF Parsing -->
+  <script src="lib/pdf.min.js"></script>
+  <script src="lib/pdf.worker.min.js"></script>
   <script>
     if (!window.pdfjsLib) {
       document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"><\/script>');
+      document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"><\/script>');
     }
   </script>
   <script>
+    // Ensure in-memory fake worker or workerSrc is ready for local file:// and http:// origins
     if (window.pdfjsLib) {
-      window.pdfjsLib.GlobalWorkerOptions.workerSrc = './pdf.worker.min.js';
+      if (window.pdfjsWorker) {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = '';
+      } else {
+        window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'lib/pdf.worker.min.js';
+      }
     }
   </script>
 
   <script src="app.js"></script>
-  <script src="app-fixes.js"></script>
 </body>
 </html>
